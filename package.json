@@ -1,0 +1,8 @@
+{
+  "name": "msc-mansion-space-creative-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MSC interior design website with private lead notification backend",
+  "scripts": {"start":"node server.js"},
+  "engines": {"node": ">=18"}
+}
