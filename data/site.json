@@ -1,0 +1,201 @@
+{
+  "version": 5,
+  "admin": {
+    "name": "MSC Admin",
+    "salt": "89658e328a46e9bf850df877c9ce2d7a",
+    "hash": "fe0185079ff55c73e4ff9575ed8511c7d2743aa0ede4657508d5c590fc749eb7ea2e951c2d5944ca3f9d513afdcd7d4227f3cc14dd9a7042fcab56715ab81fcb"
+  },
+  "content": {
+    "brandName": "MSC",
+    "brandSubtitle": "Mansion Space Creative Studio",
+    "nav": {
+      "services": "Services",
+      "projects": "Projects",
+      "about": "About",
+      "process": "Process",
+      "contact": "Contact",
+      "estimate": "Get Estimate Quotation",
+      "consultation": "Book a Consultation"
+    },
+    "hero": {
+      "eyebrow": "MAISON • SPACE • CREATIVE",
+      "heading": "Spaces that feel like you.",
+      "copy": "Thoughtful interiors, refined materials and timeless details — designed around the way you live.",
+      "primary": "Get Estimate Quotation",
+      "secondary": "Explore our work"
+    },
+    "about": {
+      "label": "01 — THE STUDIO",
+      "kicker": "MANSION SPACE CREATIVE",
+      "heading": "We design the feeling behind the space.",
+      "p1": "MSC Mansion Space Creative Studio is an interior design studio creating sophisticated homes, workplaces and hospitality spaces with a strong sense of identity.",
+      "p2": "From the first sketch to the final styling, we bring together architecture, materials, lighting and furniture to make every corner intentional.",
+      "cta": "Talk to our designers"
+    },
+    "services": {
+      "label": "02 — WHAT WE DO",
+      "heading": "One studio. Every detail.",
+      "intro": "From a single room to a complete turnkey project, our services are built to make the design journey simple and beautifully considered.",
+      "items": [
+        {
+          "number": "01",
+          "title": "Full Home Interiors",
+          "description": "Complete design direction for living rooms, bedrooms, kitchens, wardrobes and every connecting space."
+        },
+        {
+          "number": "02",
+          "title": "Modular Kitchens",
+          "description": "Elegant, practical kitchens planned around your cooking style, storage needs and aesthetic."
+        },
+        {
+          "number": "03",
+          "title": "Custom Wardrobes",
+          "description": "Made-to-measure wardrobes, storage and TV units with precise proportions and premium finishes."
+        },
+        {
+          "number": "04",
+          "title": "False Ceiling & Lighting",
+          "description": "Layered ceilings, profile lights and feature lighting designed to make every room feel finished."
+        },
+        {
+          "number": "05",
+          "title": "Complete Renovation",
+          "description": "Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling."
+        },
+        {
+          "number": "06",
+          "title": "Commercial Interiors",
+          "description": "Workspaces, studios and commercial environments designed for brand presence, comfort and performance."
+        }
+      ]
+    },
+    "statement": {
+      "quote": "Good design is not about filling a room. It is about knowing what to leave out.",
+      "small": "THE MSC APPROACH"
+    },
+    "projects": {
+      "label": "03 — SELECTED WORK",
+      "heading": "Designed with intention."
+    },
+    "why": {
+      "label": "04 — WHY MSC",
+      "heading": "A studio approach with a clear point of view.",
+      "lead": "We combine creative thinking with practical execution so the final space feels considered, not complicated.",
+      "features": [
+        {
+          "number": "01",
+          "title": "Personal direction",
+          "description": "Every project starts with your lifestyle, taste and aspirations."
+        },
+        {
+          "number": "02",
+          "title": "Material intelligence",
+          "description": "Textures, grains, stone, metal and light are selected as one composition."
+        },
+        {
+          "number": "03",
+          "title": "End-to-end execution",
+          "description": "A considered process from concept and drawings through installation and styling."
+        }
+      ]
+    },
+    "process": {
+      "label": "05 — HOW IT WORKS",
+      "heading": "A clear path to your new space.",
+      "intro": "Our process keeps the creative experience exciting while every practical detail stays organised.",
+      "steps": [
+        {
+          "number": "01",
+          "title": "Discover",
+          "description": "We understand your lifestyle, requirements, budget and design direction."
+        },
+        {
+          "number": "02",
+          "title": "Design",
+          "description": "Concepts, layouts, materials, colours and 3D visualisations bring the idea to life."
+        },
+        {
+          "number": "03",
+          "title": "Refine",
+          "description": "We finalise details, specifications and a clear project scope together."
+        },
+        {
+          "number": "04",
+          "title": "Create",
+          "description": "Our execution team turns the approved design into a finished space."
+        }
+      ]
+    },
+    "estimate": {
+      "label": "06 — ESTIMATE QUOTATION",
+      "heading": "Get your interior estimate in 4 steps.",
+      "copy": "Tell us about your home, choose your scope, add your approximate area and upload room or floor-plan photos. MSC will generate an indicative starting estimate.",
+      "rate": 1000,
+      "highlights": [
+        "Select BHK / property",
+        "Choose your interiors",
+        "Add area & location",
+        "Upload photos & get estimate"
+      ]
+    },
+    "contact": {
+      "label": "07 — LET'S CREATE",
+      "heading": "Have a space in mind?",
+      "copy": "Tell us a little about your project. Our studio will get back to you to discuss the next step."
+    },
+    "laminate": {
+      "label": "MATERIAL LIBRARY",
+      "heading": "Laminate Finishes",
+      "intro": "Browse our current laminate finish collection by name. Tap a finish to view it full size."
+    },
+    "footer": {
+      "tagline": "MAISON • SPACE • CREATIVE",
+      "closing": "Designed for spaces with soul."
+    }
+  },
+  "projects": [
+    {
+      "id": "sample1",
+      "title": "The Walnut Residence",
+      "location": "Bengaluru · 3 BHK",
+      "category": "residential",
+      "description": "Warm, layered interiors with rich timber and refined lighting.",
+      "image": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85",
+      "videoUrl": ""
+    },
+    {
+      "id": "sample2",
+      "title": "Ivory House",
+      "location": "Hyderabad · Villa",
+      "category": "residential",
+      "description": "Soft neutral architecture with timeless material contrast.",
+      "image": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=85",
+      "videoUrl": ""
+    },
+    {
+      "id": "sample3",
+      "title": "Studio 27",
+      "location": "Hyderabad · Workspace",
+      "category": "commercial",
+      "description": "A polished work environment balancing function with character.",
+      "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85",
+      "videoUrl": ""
+    },
+    {
+      "id": "sample4",
+      "title": "Monument Kitchen",
+      "location": "Hyderabad · Custom Kitchen",
+      "category": "residential",
+      "description": "Contemporary cabinetry, considered storage and premium finishes.",
+      "image": "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1800&q=85",
+      "videoUrl": ""
+    }
+  ],
+  "laminates": [],
+  "socials": {
+    "instagramUrl": "",
+    "facebookUrl": "",
+    "youtubeUrl": "",
+    "pinterestUrl": ""
+  }
+}

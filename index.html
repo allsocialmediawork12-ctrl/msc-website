@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MSC Mansion Space Creative Studio — premium interior design, architecture, renovation and bespoke spaces." />
+  <title>MSC — Mansion Space Creative Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-loader" id="loader"><span>MSC</span></div>
+
+  <header class="site-header" id="siteHeader">
+    <a class="brand" href="#home" aria-label="MSC home">
+      <img src="assets/msc-logo-light.png" alt="MSC Mansion Space Creative Studio logo" />
+      <span class="brand-text"><strong>MSC</strong><small>Mansion Space Creative Studio</small></span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="Primary navigation">
+      <a href="#services">Services</a>
+      <a href="#projects">Projects</a>
+      <a href="#about">About</a>
+      <a href="#process">Process</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="header-actions"><a class="header-quote" href="#estimate" data-open-estimate>Get Estimate Quotation <span>↗</span></a><a class="header-cta" href="#contact">Book a Consultation <span>↗</span></a></div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-media">
+        <img src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=2200&q=85" alt="Luxury contemporary interior designed by MSC" />
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="eyebrow">MAISON • SPACE • CREATIVE</p>
+        <h1>Spaces that feel<br><em>like you.</em></h1>
+        <p class="hero-copy">Thoughtful interiors, refined materials and timeless details — designed around the way you live.</p>
+        <div class="hero-actions">
+          <a class="btn btn-gold" href="#estimate" data-open-estimate>Get Estimate Quotation <span>↗</span></a>
+          <a class="text-link light" href="#projects">Explore our work <span>↓</span></a>
+        </div>
+      </div>
+      <div class="hero-scroll">SCROLL <span></span></div>
+    </section>
+
+    <section class="intro section-pad" id="about">
+      <div class="section-label">01 — THE STUDIO</div>
+      <div class="intro-grid">
+        <div>
+          <p class="eyebrow gold">MANSION SPACE CREATIVE</p>
+          <h2>We design the feeling<br>behind the <em>space.</em></h2>
+        </div>
+        <div class="intro-copy">
+          <p>MSC Mansion Space Creative Studio is an interior design studio creating sophisticated homes, workplaces and hospitality spaces with a strong sense of identity.</p>
+          <p>From the first sketch to the final styling, we bring together architecture, materials, lighting and furniture to make every corner intentional.</p>
+          <a class="text-link dark" href="#contact">Talk to our designers <span>↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="services section-pad" id="services">
+      <div class="section-head">
+        <div>
+          <div class="section-label">02 — WHAT WE DO</div>
+          <h2>One studio.<br><em>Every detail.</em></h2>
+        </div>
+        <p>From a single room to a complete turnkey project, our services are built to make the design journey simple and beautifully considered.</p>
+      </div>
+
+      <div class="service-grid">
+        <article class="service-card featured">
+          <div class="service-number">01</div>
+          <h3>Full Home Interiors</h3>
+          <p>Complete design direction for living rooms, bedrooms, kitchens, wardrobes and every connecting space.</p>
+          <a href="#contact">Explore service <span>↗</span></a>
+        </article>
+        <article class="service-card">
+          <div class="service-number">02</div>
+          <h3>Modular Kitchens</h3>
+          <p>Elegant, practical kitchens planned around your cooking style, storage needs and aesthetic.</p>
+          <a href="#contact">Explore service <span>↗</span></a>
+        </article>
+        <article class="service-card">
+          <div class="service-number">03</div>
+          <h3>Custom Furniture</h3>
+          <p>Made-to-measure pieces, wardrobes, TV units and storage with precise proportions and finishes.</p>
+          <a href="#contact">Explore service <span>↗</span></a>
+        </article>
+        <article class="service-card">
+          <div class="service-number">04</div>
+          <h3>Renovation & Styling</h3>
+          <p>Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling.</p>
+          <a href="#contact">Explore service <span>↗</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="statement">
+      <div class="statement-inner">
+        <span class="quote-mark">“</span>
+        <p>Good design is not about filling a room. It is about knowing what to leave out.</p>
+        <span class="statement-line"></span>
+        <small>THE MSC APPROACH</small>
+      </div>
+    </section>
+
+    <section class="projects section-pad" id="projects">
+      <div class="section-head project-head">
+        <div>
+          <div class="section-label">03 — SELECTED WORK</div>
+          <h2>Designed with<br><em>intention.</em></h2>
+        </div>
+        <div class="filters" role="tablist" aria-label="Project filters">
+          <button class="filter active" data-filter="all">All</button>
+          <button class="filter" data-filter="residential">Residential</button>
+          <button class="filter" data-filter="commercial">Commercial</button>
+        </div>
+      </div>
+
+      <div class="project-grid">
+        <article class="project-card tall" data-category="residential">
+          <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85" alt="Warm luxury living room" loading="lazy" />
+          <div class="project-info"><span>Residential</span><h3>The Walnut Residence</h3><p>Bengaluru · 3 BHK</p></div>
+        </article>
+        <article class="project-card" data-category="residential">
+          <img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=85" alt="Modern neutral bedroom" loading="lazy" />
+          <div class="project-info"><span>Residential</span><h3>Ivory House</h3><p>Hyderabad · Villa</p></div>
+        </article>
+        <article class="project-card" data-category="commercial">
+          <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85" alt="Contemporary office interior" loading="lazy" />
+          <div class="project-info"><span>Commercial</span><h3>Studio 27</h3><p>Hyderabad · Workspace</p></div>
+        </article>
+        <article class="project-card wide" data-category="residential">
+          <img src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1800&q=85" alt="Premium kitchen interior" loading="lazy" />
+          <div class="project-info"><span>Residential</span><h3>Monument Kitchen</h3><p>Hyderabad · Custom Kitchen</p></div>
+        </article>
+      </div>
+      <div class="center-action"><a class="btn btn-outline" href="#estimate" data-open-estimate>Get an Estimate <span>↗</span></a></div>
+    </section>
+
+    <section class="why section-pad">
+      <div class="why-image"><img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=85" alt="Elegant interior details" loading="lazy" /></div>
+      <div class="why-content">
+        <div class="section-label">04 — WHY MSC</div>
+        <h2>Luxury is in<br>the <em>details.</em></h2>
+        <p class="lead">We believe a beautiful interior should also feel effortless to live in.</p>
+        <div class="feature-list">
+          <div><span>01</span><strong>Personalised design</strong><p>Every project starts with your lifestyle, taste and aspirations.</p></div>
+          <div><span>02</span><strong>Material intelligence</strong><p>Textures, grains, stone, metal and light are selected as one composition.</p></div>
+          <div><span>03</span><strong>End-to-end execution</strong><p>A considered process from concept and drawings through installation and styling.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="process section-pad" id="process">
+      <div class="section-head">
+        <div>
+          <div class="section-label">05 — HOW IT WORKS</div>
+          <h2>A clear path to<br><em>your new space.</em></h2>
+        </div>
+        <p>Our process keeps the creative experience exciting while every practical detail stays organised.</p>
+      </div>
+      <div class="process-grid">
+        <div class="process-step"><span>01</span><h3>Discover</h3><p>We understand your lifestyle, requirements, budget and design direction.</p></div>
+        <div class="process-step"><span>02</span><h3>Design</h3><p>Concepts, layouts, materials, colours and 3D visualisations bring the idea to life.</p></div>
+        <div class="process-step"><span>03</span><h3>Refine</h3><p>We finalise details, specifications and a clear project scope together.</p></div>
+        <div class="process-step"><span>04</span><h3>Create</h3><p>Our execution team turns the approved design into a finished space.</p></div>
+      </div>
+    </section>
+
+    <section class="laminate-section section-pad" id="laminates">
+      <div class="section-head laminate-head">
+        <div>
+          <div class="section-label" id="laminateLabel">MATERIAL LIBRARY</div>
+          <h2 id="laminateHeading">Laminate <em>Finishes.</em></h2>
+        </div>
+        <p id="laminateIntro">Browse our current laminate finish collection by name.</p>
+      </div>
+      <div class="laminate-grid-public" id="laminateGridPublic"></div>
+      <p class="laminate-empty" id="laminateEmpty">Our finish library is being curated. Please check back soon.</p>
+    </section>
+
+    <section class="estimate-section section-pad" id="estimate">
+      <div class="estimate-teaser">
+        <div>
+          <div class="section-label">06 — ESTIMATE QUOTATION</div>
+          <h2>Get your interior<br><em>estimate in 4 steps.</em></h2>
+          <p>Tell us about your home, choose your scope, add your approximate area and upload room or floor-plan photos. MSC will generate an indicative starting range.</p>
+        </div>
+        <button class="btn btn-gold" type="button" data-open-estimate>Get Estimate Quotation <span>↗</span></button>
+      </div>
+      <div class="estimate-highlights">
+        <div><strong>01</strong><span>Select BHK / property</span></div>
+        <div><strong>02</strong><span>Choose your interiors</span></div>
+        <div><strong>03</strong><span>Add area & location</span></div>
+        <div><strong>04</strong><span>Upload photos & get range</span></div>
+      </div>
+    </section>
+
+    <div class="estimate-modal" id="estimateModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="estimateTitle">
+      <div class="estimate-modal-panel">
+        <button class="estimate-close" id="estimateClose" type="button" aria-label="Close estimate quotation">×</button>
+        <div class="estimate-brand-row">
+          <img src="assets/msc-logo-light.png" alt="MSC logo">
+          <div><strong>MSC</strong><small>Mansion Space Creative Studio</small></div>
+          <span class="step-count" id="stepCount">1 / 4</span>
+        </div>
+
+        <div class="estimate-progress" aria-hidden="true">
+          <span class="progress-dot active"></span><span class="progress-line"></span>
+          <span class="progress-dot"></span><span class="progress-line"></span>
+          <span class="progress-dot"></span><span class="progress-line"></span>
+          <span class="progress-dot"></span>
+        </div>
+
+        <div class="estimate-step active" data-step="1">
+          <p class="wizard-kicker">STEP 01</p>
+          <h3 id="estimateTitle">Select your BHK type</h3>
+          <p class="wizard-subtitle">Choose the size of your home to start your estimate.</p>
+          <div class="choice-list">
+            <button class="choice-card" type="button" data-field="bhk" data-value="1 BHK"><span class="radio"></span><strong>1 BHK</strong></button>
+            <button class="choice-card" type="button" data-field="bhk" data-value="2 BHK"><span class="radio"></span><strong>2 BHK</strong><span class="chevron">⌄</span></button>
+            <button class="choice-card" type="button" data-field="bhk" data-value="3 BHK"><span class="radio"></span><strong>3 BHK</strong><span class="chevron">⌄</span></button>
+            <button class="choice-card" type="button" data-field="bhk" data-value="4 BHK"><span class="radio"></span><strong>4 BHK</strong><span class="chevron">⌄</span></button>
+            <button class="choice-card" type="button" data-field="bhk" data-value="5 BHK+"><span class="radio"></span><strong>5 BHK+</strong></button>
+          </div>
+        </div>
+
+        <div class="estimate-step" data-step="2">
+          <p class="wizard-kicker">STEP 02</p>
+          <h3>What would you like to design?</h3>
+          <p class="wizard-subtitle">Select the scope and finish level closest to your requirement.</p>
+          <div class="choice-grid">
+            <button class="choice-card compact" type="button" data-field="scope" data-value="Full Home Interior"><strong>Full Home</strong><small>Complete interiors</small></button>
+            <button class="choice-card compact" type="button" data-field="scope" data-value="Kitchen + Wardrobes"><strong>Kitchen + Wardrobes</strong><small>Modular essentials</small></button>
+            <button class="choice-card compact" type="button" data-field="scope" data-value="Living + Bedrooms"><strong>Living + Bedrooms</strong><small>Selected spaces</small></button>
+            <button class="choice-card compact" type="button" data-field="scope" data-value="Commercial Interior"><strong>Commercial</strong><small>Office / workspace</small></button>
+          </div>
+          <div class="wizard-field">
+            <label for="finishSelect">Finish level</label>
+            <select id="finishSelect">
+              <option value="Essential" data-rate="1000">Essential · ₹1,000/sq.ft.</option>
+              <option value="Premium" data-rate="1000" selected>Premium · ₹1,000/sq.ft.</option>
+              <option value="Luxury" data-rate="1000">Luxury · ₹1,000/sq.ft.</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="estimate-step" data-step="3">
+          <p class="wizard-kicker">STEP 03</p>
+          <h3>Tell us about your space</h3>
+          <p class="wizard-subtitle">Approximate measurements are enough for this first estimate.</p>
+          <div class="wizard-form-grid">
+            <label><span>City</span><input id="estimateCity" type="text" placeholder="Hyderabad" /></label>
+            <label><span>Area (sq.ft.)</span><input id="estimateArea" type="number" min="100" step="50" placeholder="1200" /></label>
+            <label><span>Property type</span><select id="estimateProperty"><option>Apartment</option><option>Villa</option><option>Independent House</option><option>Office / Commercial</option></select></label>
+            <label><span>Possession / start</span><select id="estimateStart"><option>Ready to start</option><option>Within 1 month</option><option>1–3 months</option><option>3+ months</option></select></label>
+          </div>
+          <div class="area-hint"><span>Tip</span> If you don't know the exact area, use the approximate carpet area from your floor plan or builder document.</div>
+        </div>
+
+        <div class="estimate-step" data-step="4">
+          <p class="wizard-kicker">STEP 04</p>
+          <h3>Upload your space photos</h3>
+          <p class="wizard-subtitle">Add photos one by one or select several together. You can upload room photos, floor plans or inspiration references.</p>
+          <label class="upload-box" for="estimateImages">
+            <span class="upload-icon">＋</span><strong>Add photos</strong><small>JPG, PNG, WEBP · up to 10 images</small>
+          </label>
+          <input id="estimateImages" class="visually-hidden" type="file" accept="image/*" multiple>
+          <div class="image-preview-grid" id="imagePreviewGrid"></div>
+          <div class="wizard-form-grid contact-grid">
+            <label><span>Your name</span><input id="estimateName" type="text" placeholder="Your name" /></label>
+            <label><span>Phone / WhatsApp</span><input id="estimatePhone" type="tel" placeholder="+91 98765 43210" /></label>
+          </div>
+        </div>
+
+        <div class="estimate-result-card" id="estimateResultCard" aria-live="polite">
+          <span>INDICATIVE STARTING RANGE</span>
+          <strong id="estimateAmount">₹ —</strong>
+          <small id="estimateSummary">Complete the steps to calculate your estimate.</small>
+        </div>
+
+        <div class="estimate-nav" id="estimateNav">
+          <button class="wizard-back" id="estimateBack" type="button">Back</button>
+          <button class="btn btn-gold wizard-next" id="estimateNext" type="button">Next <span>→</span></button>
+        </div>
+        <button class="estimate-whatsapp-final" id="estimateWhatsApp" type="button">Send estimate request <span>↗</span></button>
+        <p class="wizard-note" id="estimateNote">Estimate basis: ₹1,000 per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.</p>
+
+        <section class="estimate-thankyou" id="estimateThankyou" aria-live="polite" aria-hidden="true">
+          <div class="thankyou-confetti" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>•</span><span>✧</span><span>•</span></div>
+          <div class="thankyou-icon" aria-hidden="true">✦</div>
+          <p class="thankyou-kicker">REQUEST RECEIVED</p>
+          <h3>Thank you for<br><em>choosing MSC.</em></h3>
+          <p class="thankyou-copy" id="thankyouCopy">We’ve received your requirements. Our team will review them and get in touch shortly.</p>
+          <div class="thankyou-budget">
+            <span>YOUR ESTIMATED BUDGET RANGE</span>
+            <strong id="thankyouAmount">₹ —</strong>
+            <small>This is an indicative range and can be customised to suit your requirements.</small>
+          </div>
+          <button class="thankyou-details-toggle" id="thankyouDetailsToggle" type="button" aria-expanded="false">View detailed summary <span>⌄</span></button>
+          <div class="thankyou-details" id="thankyouDetails" hidden></div>
+          <a class="btn btn-gold thankyou-home" href="/">Go to home page <span>↗</span></a>
+          <button class="thankyou-close" id="thankyouClose" type="button">Start another estimate</button>
+        </section>
+      </div>
+    </div>
+
+    <section class="consultation" id="contact">
+      <div class="consultation-bg"></div>
+      <div class="consultation-inner">
+        <div>
+          <div class="section-label light-label">07 — LET'S CREATE</div>
+          <h2>Have a space<br>in <em>mind?</em></h2>
+          <p>Tell us a little about your project. Our studio will get back to you to discuss the next step.</p>
+        </div>
+        <form class="contact-form" id="contactForm">
+          <div class="form-row"><label><span>Name</span><input type="text" name="name" placeholder="Your name" required></label><label><span>Phone</span><input type="tel" name="phone" placeholder="+91" required></label></div>
+          <label><span>Email</span><input type="email" name="email" placeholder="you@example.com" required></label>
+          <label><span>Project type</span><select name="project"><option>Full Home Interior</option><option>Kitchen</option><option>Bedroom / Wardrobe</option><option>Commercial Space</option><option>Renovation</option><option>Other</option></select></label>
+          <label><span>Tell us about your project</span><textarea name="message" rows="4" placeholder="Location, approximate size, style you like..."></textarea></label>
+          <button class="btn btn-gold" type="submit">Request a consultation <span>↗</span></button>
+          <p class="form-note">Your details are sent securely to MSC. We will contact you shortly.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="footer-brand"><img src="assets/msc-logo-light.png" alt="MSC logo"><p>MAISON • SPACE • CREATIVE</p></div>
+      <div class="footer-nav"><a href="#services">Services</a><a href="#projects">Projects</a><a href="#about">About</a><a href="#contact">Contact</a></div>
+      <div class="footer-contact"><span>Start a conversation</span><a href="#contact">Book a consultation ↗</a>
+        <div class="social-links" aria-label="MSC social media">
+          <a id="socialInstagram" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Instagram</a>
+          <a id="socialFacebook" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Facebook</a>
+          <a id="socialYoutube" href="#" target="_blank" rel="noopener" class="social-link hidden-social">YouTube</a>
+          <a id="socialPinterest" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Pinterest</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom"><span>© <span id="year"></span> MSC Mansion Space Creative Studio</span><span>Designed for spaces with soul.</span></div>
+  </footer>
+
+  <div class="toast" id="toast">Thank you — your consultation request is ready to be connected.</div>
+  <button class="back-top" id="backTop" aria-label="Back to top">↑</button>
+  <script src="script.js"></script>
+</body>
+</html>
