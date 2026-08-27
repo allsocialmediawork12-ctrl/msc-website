@@ -38,6 +38,16 @@ filters.forEach(filter => filter.addEventListener('click', () => {
   cards.forEach(card => card.style.display = selected === 'all' || card.dataset.category === selected ? '' : 'none');
 }));
 
+// Google Analytics lead tracking. GA4 will record successful enquiry submissions as generate_lead events.
+function trackLead(type, leadId) {
+  if (typeof window.gtag !== 'function') return;
+  window.gtag('event', 'generate_lead', {
+    lead_type: type,
+    lead_id: leadId || undefined,
+    method: 'website_form'
+  });
+}
+
 // Consultation form. The form posts to the private /api/lead endpoint when the site is deployed with the MSC backend.
 const contactForm = document.getElementById('contactForm');
 contactForm.addEventListener('submit', async event => {
@@ -45,6 +55,7 @@ contactForm.addEventListener('submit', async event => {
   const data = new FormData(contactForm);
   const name = data.get('name')?.trim() || 'there';
   const result = await submitLead('contact');
+  if (result.saved) trackLead('contact', result.leadId);
   toast.textContent = result.saved
     ? (result.notified ? `Thank you, ${name}. MSC has received your request.` : `Thank you, ${name}. Your request has been received successfully.`)
     : `Sorry, ${name}. We could not save your request. Please try again.`;
@@ -212,6 +223,7 @@ async function showEstimateThankyou() {
   nextBtn.disabled = true;
   nextBtn.innerHTML = 'Submitting…';
   const result = await submitLead('estimate');
+  if (result.saved) trackLead('estimate', result.leadId);
   thankyouAmount.textContent = estimateAmount.textContent;
   thankyouCopy.textContent = result.saved
     ? (result.notified ? `Thank you, ${selected.name || 'there'}. We’ve received your requirements and our MSC team will contact you shortly.` : `Thank you, ${selected.name || 'there'}. We’ve received your requirements successfully. Our MSC team will contact you shortly.`)
