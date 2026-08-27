@@ -89,3 +89,9 @@ Do not delete the data folder if you want to keep the CMS content and admin acco
 SECURITY NOTE
 -------------
 The admin password is stored as a scrypt hash with a random salt. The private admin session uses an HttpOnly cookie. Media upload/delete and CMS writes require an authenticated admin session.
+
+LEAD INBOX — IMPORTANT
+-----------------------
+Every contact/estimate submission is now persisted in the server-side Customer Enquiries section in Admin Panel BEFORE WhatsApp notification is attempted. This means missing Twilio credentials or a WhatsApp delivery failure will not lose the client details.
+
+To receive private WhatsApp alerts, set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM in Render. The configured owner recipients remain +91 70933 28871 and +91 93474 98256 unless OWNER_WHATSAPP_TO is changed.

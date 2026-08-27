@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "admin": {
     "name": "MSC Admin",
     "salt": "89658e328a46e9bf850df877c9ce2d7a",
@@ -197,5 +197,6 @@
     "facebookUrl": "",
     "youtubeUrl": "",
     "pinterestUrl": ""
-  }
+  },
+  "leads": []
 }

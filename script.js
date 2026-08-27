@@ -44,10 +44,10 @@ contactForm.addEventListener('submit', async event => {
   event.preventDefault();
   const data = new FormData(contactForm);
   const name = data.get('name')?.trim() || 'there';
-  const sent = await submitLead('contact');
-  toast.textContent = sent
-    ? `Thank you, ${name}. MSC has received your request.`
-    : `Thank you, ${name}. Your request is saved, but the private notification system is not connected yet.`;
+  const result = await submitLead('contact');
+  toast.textContent = result.saved
+    ? (result.notified ? `Thank you, ${name}. MSC has received your request.` : `Thank you, ${name}. Your request has been received successfully.`)
+    : `Sorry, ${name}. We could not save your request. Please try again.`;
   toast.classList.add('show');
   contactForm.reset();
   setTimeout(() => toast.classList.remove('show'), 4200);
@@ -211,11 +211,11 @@ nextBtn.addEventListener('click', async () => {
 async function showEstimateThankyou() {
   nextBtn.disabled = true;
   nextBtn.innerHTML = 'Submitting…';
-  const sent = await submitLead('estimate');
+  const result = await submitLead('estimate');
   thankyouAmount.textContent = estimateAmount.textContent;
-  thankyouCopy.textContent = sent
-    ? `Thank you, ${selected.name || 'there'}. We’ve received your requirements and our MSC team will contact you shortly.`
-    : `Thank you, ${selected.name || 'there'}. Your estimate is ready. We’ve saved your requirements and our team can follow up once the notification connection is active.`;
+  thankyouCopy.textContent = result.saved
+    ? (result.notified ? `Thank you, ${selected.name || 'there'}. We’ve received your requirements and our MSC team will contact you shortly.` : `Thank you, ${selected.name || 'there'}. We’ve received your requirements successfully. Our MSC team will contact you shortly.`)
+    : `Sorry, ${selected.name || 'there'}. We could not save your request. Please try again.`;
   thankyouDetails.innerHTML = [
     ['Name', selected.name || '—'],
     ['Phone / WhatsApp', selected.phone || '—'],
@@ -290,11 +290,12 @@ async function submitLead(source='estimate') {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
-    if (!response.ok) throw new Error('Lead endpoint unavailable');
-    return true;
+    const result = await response.json().catch(()=>({}));
+    if (!response.ok) throw new Error(result.error || 'Lead endpoint unavailable');
+    return result;
   } catch (error) {
-    console.warn('MSC lead notification is not connected yet.', error);
-    return false;
+    console.error('MSC lead save failed.', error);
+    return {saved:false,notified:false,error:error.message};
   }
 }
 
@@ -302,12 +303,12 @@ whatsappBtn.addEventListener('click', async () => {
   calculateEstimate();
   whatsappBtn.disabled = true;
   whatsappBtn.textContent = 'Sending your request…';
-  const sent = await submitLead('estimate');
+  const result = await submitLead('estimate');
   whatsappBtn.disabled = false;
   whatsappBtn.innerHTML = 'Send estimate request <span>↗</span>';
-  toast.textContent = sent
-    ? 'Request submitted. MSC has been notified.'
-    : 'Your estimate is ready. The secure notification system still needs to be connected.';
+  toast.textContent = result.saved
+    ? (result.notified ? 'Request submitted. MSC has been notified.' : 'Request submitted and saved. WhatsApp notification is not connected yet.')
+    : 'We could not save your request. Please try again.';
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3500);
 });

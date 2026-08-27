@@ -74,7 +74,7 @@ function verifyPassword(password, record) {
 }
 function defaultData(){
   const p=makePassword(process.env.ADMIN_PASSWORD || 'MSC-ADMIN-2026');
-  return {version:5, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''}};
+  return {version:6, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], leads:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''}};
 }
 function readData(){
   try { if(!fs.existsSync(DATA_FILE)){const d=defaultData();fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2));return d;} return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }
@@ -92,6 +92,7 @@ function mergeDefaults(target, defaults){
 data.content=mergeDefaults(data.content,DEFAULT_CONTENT);
 data.projects=Array.isArray(data.projects)?data.projects:SAMPLE_PROJECTS;
 data.laminates=Array.isArray(data.laminates)?data.laminates:[];
+data.leads=Array.isArray(data.leads)?data.leads:[];
 data.socials=data.socials||{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''};
 writeData(data);
 
@@ -111,10 +112,13 @@ async function sendWhatsApp(body){
   const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
   const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];
   const recipients=(process.env.OWNER_WHATSAPP_TO || defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
-  if(!sid||!token||!from||!recipients.length) return {configured:false};
+  if(!sid||!token||!from||!recipients.length) return {configured:false,sentTo:0,failedTo:[]};
   const auth=Buffer.from(`${sid}:${token}`).toString('base64');
-  const results=await Promise.all(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok) throw new Error(await r.text());return true;}));
-  return {configured:true,sentTo:results.length};
+  const settled=await Promise.allSettled(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok) throw new Error(await r.text());return to;}));
+  const sentTo=settled.filter(x=>x.status==='fulfilled').length;
+  const failedTo=settled.filter(x=>x.status==='rejected').map((x,i)=>recipients[i]);
+  if(failedTo.length) console.error('WhatsApp notification failures:', settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||String(x.reason)));
+  return {configured:true,sentTo,failedTo};
 }
 function leadMessage(lead){return ['🔔 New MSC website enquiry',`Source: ${lead.source||'Website'}`,`Name: ${lead.name||'-'}`,`Phone: ${lead.phone||'-'}`,lead.email?`Email: ${lead.email}`:null,lead.bhk?`BHK: ${lead.bhk}`:null,lead.property?`Property: ${lead.property}`:null,lead.city?`City: ${lead.city}`:null,lead.area?`Area: ${lead.area} sq.ft.`:null,lead.scope?`Scope: ${lead.scope}`:null,lead.finish?`Finish: ${lead.finish}`:null,lead.start?`Start: ${lead.start}`:null,lead.estimate?`Estimate: ${lead.estimate}`:null,lead.project?`Project type: ${lead.project}`:null,lead.message?`Message: ${lead.message}`:null,lead.photoCount!=null?`Photos uploaded: ${lead.photoCount}`:null,`Received: ${new Date().toLocaleString('en-IN')}`].filter(Boolean).join('\n');}
 
@@ -150,8 +154,23 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST' && url.pathname==='/api/media'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,35*1024*1024);if(!b.filename||!b.data||!b.mime)return send(res,400,{ok:false,error:'Media filename, mime and data are required.'});if(!isAllowedMedia(b.filename,b.mime))return send(res,400,{ok:false,error:'Only JPG, PNG, WEBP, MP4, WEBM and MOV are supported.'});const match=String(b.data).match(/^data:([^;]+);base64,(.+)$/s);if(!match||match[1]!==b.mime)return send(res,400,{ok:false,error:'Invalid media payload.'});const buffer=Buffer.from(match[2],'base64');if(buffer.length>25*1024*1024)return send(res,413,{ok:false,error:'Media is too large. Maximum is 25 MB.'});const filename=safeFileName(b.filename);fs.writeFileSync(path.join(UPLOADS_DIR,filename),buffer);return send(res,200,{ok:true,url:`/uploads/${filename}`,filename});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not upload media.'});}}
   if(req.method==='DELETE' && url.pathname==='/api/media'){if(!requireAuth(req,res)) return;const raw=url.searchParams.get('file')||'';const filename=path.basename(raw);if(!filename||filename!==raw)return send(res,400,{ok:false,error:'Invalid media file.'});try{if(fs.existsSync(path.join(UPLOADS_DIR,filename)))fs.unlinkSync(path.join(UPLOADS_DIR,filename));return send(res,200,{ok:true});}catch(e){return send(res,500,{ok:false,error:'Could not delete media.'});}}
 
-  // Public lead notifications
-  if(req.method==='POST' && url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const result=await sendWhatsApp(leadMessage(lead));if(!result.configured)return send(res,503,{ok:false,error:'WhatsApp notification is not configured on the server yet.'});return send(res,200,{ok:true});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
+  // Public lead notifications + persistent lead inbox
+  if(req.method==='POST' && url.pathname==='/api/lead'){try{
+    const lead=await readJson(req,200000);
+    if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});
+    const record={...lead,id:crypto.randomUUID(),status:'New',createdAt:new Date().toISOString()};
+    data.leads.unshift(record);
+    writeData(data);
+    let result={configured:false,sentTo:0,failedTo:[]};
+    try{ result=await sendWhatsApp(leadMessage(record)); }catch(err){ console.error('WhatsApp send failed:',err); }
+    record.notification={configured:result.configured,sentTo:result.sentTo,failedTo:result.failedTo||[],updatedAt:new Date().toISOString()};
+    writeData(data);
+    return send(res,200,{ok:true,saved:true,notified:result.sentTo>0,notificationConfigured:result.configured,sentTo:result.sentTo,leadId:record.id});
+  }catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not save the enquiry.'});}}
+
+  if(req.method==='GET' && url.pathname==='/api/leads'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,leads:data.leads||[]});}
+  if(/^\/api\/leads\//.test(url.pathname) && req.method==='PUT'){if(!requireAuth(req,res)) return;try{const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.leads.findIndex(x=>x.id===id);if(idx<0)return send(res,404,{ok:false,error:'Lead not found.'});const b=await readJson(req,20000);data.leads[idx]={...data.leads[idx],status:String(b.status||data.leads[idx].status||'New')};writeData(data);return send(res,200,{ok:true,lead:data.leads[idx]});}catch(e){return send(res,400,{ok:false,error:'Could not update lead.'});}}
+  if(/^\/api\/leads\//.test(url.pathname) && req.method==='DELETE'){if(!requireAuth(req,res)) return;const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.leads.findIndex(x=>x.id===id);if(idx<0)return send(res,404,{ok:false,error:'Lead not found.'});data.leads.splice(idx,1);writeData(data);return send(res,200,{ok:true});}
 
   let filePath=path.join(ROOT,url.pathname==='/'?'index.html':url.pathname);
   if(!filePath.startsWith(ROOT))return send(res,403,{ok:false});
