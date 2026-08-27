@@ -67,8 +67,10 @@ Private owner WhatsApp alert recipients are configured server-side as:
 For actual WhatsApp delivery on Render, set your Twilio environment variables:
 TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN
-TWILIO_WHATSAPP_FROM
+TWILIO_WHATSAPP_FROM (approved WhatsApp sender)
 OWNER_WHATSAPP_TO (optional; defaults to the two MSC numbers above)
+TWILIO_CONTENT_SID (optional, recommended for approved business-initiated WhatsApp templates)
+The Admin Panel now includes WhatsApp Connection Check and Send Test WhatsApp buttons.
 
 MEDIA
 -----
@@ -95,3 +97,10 @@ LEAD INBOX — IMPORTANT
 Every contact/estimate submission is now persisted in the server-side Customer Enquiries section in Admin Panel BEFORE WhatsApp notification is attempted. This means missing Twilio credentials or a WhatsApp delivery failure will not lose the client details.
 
 To receive private WhatsApp alerts, set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM in Render. The configured owner recipients remain +91 70933 28871 and +91 93474 98256 unless OWNER_WHATSAPP_TO is changed.
+
+
+DIRECT WHATSAPP DELIVERY
+- Customer submissions are saved first and then the server automatically sends the complete lead details to both OWNER_WHATSAPP_TO numbers.
+- Meta WhatsApp Cloud API is preferred when WHATSAPP_CLOUD_ACCESS_TOKEN and WHATSAPP_CLOUD_PHONE_NUMBER_ID are set.
+- Otherwise Twilio WhatsApp is used.
+- Numbers alone cannot send WhatsApp messages; an authenticated WhatsApp API sender is required.

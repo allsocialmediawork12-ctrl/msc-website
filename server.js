@@ -108,17 +108,101 @@ function readJson(req,maxBytes=150000){ return new Promise((resolve,reject)=>{le
 function safeFileName(name){ const ext=path.extname(name||'').toLowerCase(); const base=path.basename(name||'media',ext).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,60)||'media'; return `${Date.now()}-${Math.random().toString(36).slice(2,9)}-${base}${ext}`; }
 function isAllowedMedia(name,mime){ const ext=path.extname(name||'').toLowerCase(); return ['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext) && /^(video|image)\//.test(mime||''); }
 
-async function sendWhatsApp(body){
-  const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
+function whatsappConfig(){
+  const sid=String(process.env.TWILIO_ACCOUNT_SID||'').trim();
+  const token=String(process.env.TWILIO_AUTH_TOKEN||'').trim();
+  const fromRaw=String(process.env.TWILIO_WHATSAPP_FROM || process.env.TWILIO_WHATSAPP_NUMBER || process.env.WHATSAPP_FROM || '').trim();
+  const from=fromRaw ? (fromRaw.startsWith('whatsapp:') ? fromRaw : `whatsapp:+${fromRaw.replace(/^\+/,'')}`) : '';
+  const rawTo=String(process.env.OWNER_WHATSAPP_TO || process.env.OWNER_WHATSAPP_NUMBERS || '').trim();
   const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];
-  const recipients=(process.env.OWNER_WHATSAPP_TO || defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
-  if(!sid||!token||!from||!recipients.length) return {configured:false,sentTo:0,failedTo:[]};
-  const auth=Buffer.from(`${sid}:${token}`).toString('base64');
-  const settled=await Promise.allSettled(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok) throw new Error(await r.text());return to;}));
+  const recipients=(rawTo||defaults.join(','))
+    .split(',').map(v=>v.trim()).filter(Boolean)
+    .map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
+  const metaToken=String(process.env.WHATSAPP_CLOUD_ACCESS_TOKEN||process.env.META_WHATSAPP_ACCESS_TOKEN||'').trim();
+  const metaPhoneId=String(process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID||process.env.META_WHATSAPP_PHONE_NUMBER_ID||'').trim();
+  const metaVersion=String(process.env.WHATSAPP_CLOUD_API_VERSION||'v23.0').trim();
+  const metaTemplateName=String(process.env.WHATSAPP_TEMPLATE_NAME||'').trim();
+  const metaTemplateLanguage=String(process.env.WHATSAPP_TEMPLATE_LANGUAGE||'en_US').trim();
+  return {sid,token,from,recipients,contentSid:String(process.env.TWILIO_CONTENT_SID||'').trim(),metaToken,metaPhoneId,metaVersion,metaTemplateName,metaTemplateLanguage};
+}
+
+function getWhatsAppStatus(){
+  const c=whatsappConfig();
+  const metaReady=!!(c.metaToken&&c.metaPhoneId&&c.recipients.length);
+  const twilioReady=!!(c.sid&&c.token&&c.from&&c.recipients.length);
+  return {
+    provider:metaReady?'Meta WhatsApp Cloud API':(twilioReady?'Twilio WhatsApp':'WhatsApp API'),
+    credentialsPresent:!!((c.sid&&c.token)||(c.metaToken)),
+    senderPresent:!!(c.from||c.metaPhoneId),
+    sender:c.from||c.metaPhoneId||null,
+    recipients:c.recipients,
+    contentTemplatePresent:!!(c.contentSid||c.metaTemplateName),
+    ready:metaReady||twilioReady,
+    metaConfigured:metaReady,
+    twilioConfigured:twilioReady,
+    note:metaReady
+      ? (c.metaTemplateName ? 'Using an approved WhatsApp template through Meta Cloud API.' : 'Using direct Meta Cloud API text. For outbound business-initiated messages, use an approved template.')
+      : (c.contentSid ? 'Using a Twilio Content template.' : 'Using a normal Twilio WhatsApp message body. Business-initiated WhatsApp messages may require an approved template depending on the conversation window/account setup.')
+  };
+}
+
+async function sendWhatsApp(body){
+  const c=whatsappConfig();
+  // Prefer Meta WhatsApp Cloud API when configured.
+  if(c.metaToken && c.metaPhoneId && c.recipients.length){
+    const settled=await Promise.allSettled(c.recipients.map(async toRaw=>{
+      const to=toRaw.replace(/^whatsapp:\+?/,'').replace(/[^0-9]/g,'');
+      const payload=c.metaTemplateName ? {
+        messaging_product:'whatsapp',
+        to,
+        type:'template',
+        template:{
+          name:c.metaTemplateName,
+          language:{code:c.metaTemplateLanguage},
+          components:[{type:'body',parameters:[{type:'text',text:body.slice(0,900)}]}]
+        }
+      } : {
+        messaging_product:'whatsapp',
+        recipient_type:'individual',
+        to,
+        type:'text',
+        text:{preview_url:false,body}
+      };
+      const r=await fetch(`https://graph.facebook.com/${c.metaVersion}/${c.metaPhoneId}/messages`,{
+        method:'POST',
+        headers:{Authorization:`Bearer ${c.metaToken}`,'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(!r.ok){const txt=await r.text();throw new Error(txt);}
+      return toRaw;
+    }));
+    const sentTo=settled.filter(x=>x.status==='fulfilled').length;
+    const failedTo=settled.map((x,i)=>x.status==='rejected'?c.recipients[i]:null).filter(Boolean);
+    if(failedTo.length) console.error('Meta WhatsApp notification failures:', settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||String(x.reason)));
+    return {configured:true,sentTo,failedTo,provider:'Meta WhatsApp Cloud API',reason:failedTo.length?'Meta rejected one or more recipients.':''};
+  }
+
+  if(!c.sid||!c.token||!c.from||!c.recipients.length){
+    return {configured:false,sentTo:0,failedTo:c.recipients,reason:'Missing WhatsApp API credentials, sender, or recipients.'};
+  }
+  const auth=Buffer.from(`${c.sid}:${c.token}`).toString('base64');
+  const settled=await Promise.allSettled(c.recipients.map(async to=>{
+    const form={From:c.from,To:to};
+    if(c.contentSid){
+      form.ContentSid=c.contentSid;
+      form.ContentVariables=JSON.stringify({'1':'MSC Website','2':body.slice(0,900)});
+    } else {
+      form.Body=body;
+    }
+    const params=new URLSearchParams(form);
+    const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${c.sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});
+    if(!r.ok){ const txt=await r.text(); throw new Error(txt); }
+    return to;
+  }));
   const sentTo=settled.filter(x=>x.status==='fulfilled').length;
-  const failedTo=settled.filter(x=>x.status==='rejected').map((x,i)=>recipients[i]);
+  const failedTo=settled.map((x,i)=>x.status==='rejected'?c.recipients[i]:null).filter(Boolean);
   if(failedTo.length) console.error('WhatsApp notification failures:', settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||String(x.reason)));
-  return {configured:true,sentTo,failedTo};
+  return {configured:true,sentTo,failedTo,provider:'Twilio WhatsApp',reason:failedTo.length?'Twilio rejected one or more recipients.':''};
 }
 function leadMessage(lead){return ['🔔 New MSC website enquiry',`Source: ${lead.source||'Website'}`,`Name: ${lead.name||'-'}`,`Phone: ${lead.phone||'-'}`,lead.email?`Email: ${lead.email}`:null,lead.bhk?`BHK: ${lead.bhk}`:null,lead.property?`Property: ${lead.property}`:null,lead.city?`City: ${lead.city}`:null,lead.area?`Area: ${lead.area} sq.ft.`:null,lead.scope?`Scope: ${lead.scope}`:null,lead.finish?`Finish: ${lead.finish}`:null,lead.start?`Start: ${lead.start}`:null,lead.estimate?`Estimate: ${lead.estimate}`:null,lead.project?`Project type: ${lead.project}`:null,lead.message?`Message: ${lead.message}`:null,lead.photoCount!=null?`Photos uploaded: ${lead.photoCount}`:null,`Received: ${new Date().toLocaleString('en-IN')}`].filter(Boolean).join('\n');}
 
@@ -139,6 +223,9 @@ const server=http.createServer(async(req,res)=>{
   // Admin settings/content
   if(req.method==='POST' && url.pathname==='/api/content'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,200000);data.content=mergeDefaults(b.content||data.content,DEFAULT_CONTENT);data.socials=b.socials||data.socials;writeData(data);return send(res,200,{ok:true});}catch(e){return send(res,400,{ok:false,error:'Could not save website content.'});}}
   if(req.method==='POST' && url.pathname==='/api/admin/settings'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,30000);if(b.name) data.admin.name=String(b.name).trim().slice(0,80);if(b.newPassword){if(String(b.newPassword).length<8)return send(res,400,{ok:false,error:'Password must be at least 8 characters.'});const p=makePassword(String(b.newPassword));data.admin.salt=p.salt;data.admin.hash=p.hash;}writeData(data);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Could not save admin settings.'});}}
+
+  if(req.method==='GET' && url.pathname==='/api/admin/whatsapp-status'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,status:getWhatsAppStatus()});}
+  if(req.method==='POST' && url.pathname==='/api/admin/whatsapp-test'){if(!requireAuth(req,res)) return;try{const status=getWhatsAppStatus();if(!status.ready)return send(res,400,{ok:false,error:'WhatsApp is not fully configured in Render.',status});const result=await sendWhatsApp('MSC test alert — WhatsApp notification connection is working.');return send(res,result.sentTo>0?200:502,{ok:result.sentTo>0,result,status});}catch(e){return send(res,500,{ok:false,error:e.message||'WhatsApp test failed.'});}}
 
   // Project CRUD
   if(req.method==='POST' && url.pathname==='/api/projects'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,100000);if(!b.title||!b.image)return send(res,400,{ok:false,error:'Project title and image are required.'});const p={id:b.id||crypto.randomUUID(),title:String(b.title),location:String(b.location||''),category:String(b.category||'residential'),description:String(b.description||''),image:String(b.image),videoUrl:String(b.videoUrl||'')};data.projects.unshift(p);writeData(data);return send(res,200,{ok:true,project:p});}catch(e){return send(res,400,{ok:false,error:'Could not add project.'});}}
