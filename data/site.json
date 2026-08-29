@@ -3,7 +3,8 @@
   "admin": {
     "name": "MSC Admin",
     "salt": "89658e328a46e9bf850df877c9ce2d7a",
-    "hash": "fe0185079ff55c73e4ff9575ed8511c7d2743aa0ede4657508d5c590fc749eb7ea2e951c2d5944ca3f9d513afdcd7d4227f3cc14dd9a7042fcab56715ab81fcb"
+    "hash": "fe0185079ff55c73e4ff9575ed8511c7d2743aa0ede4657508d5c590fc749eb7ea2e951c2d5944ca3f9d513afdcd7d4227f3cc14dd9a7042fcab56715ab81fcb",
+    "envInitialized": false
   },
   "content": {
     "brandName": "MSC",

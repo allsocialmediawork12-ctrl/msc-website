@@ -13,7 +13,7 @@ Open /admin.html on the deployed website.
 
 Initial admin credentials:
 - Name: MSC Admin
-- Password: MSC-ADMIN-2026
+- The initial admin password is taken from the Render `ADMIN_PASSWORD` environment variable on first startup. Do not store or publish the password in this file.
 
 Change the admin name and password from the Admin Account section after logging in.
 

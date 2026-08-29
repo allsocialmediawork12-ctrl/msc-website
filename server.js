@@ -16,7 +16,7 @@ const DATA_FILE = path.join(DATA_DIR, 'site.json');
 const MIME = {
   '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
   '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.webp':'image/webp', '.svg':'image/svg+xml',
-  '.mp4':'video/mp4', '.webm':'video/webm', '.mov':'video/quicktime', '.txt':'text/plain; charset=utf-8', '.json':'application/json; charset=utf-8'
+  '.mp4':'video/mp4', '.webm':'video/webm', '.mov':'video/quicktime', '.txt':'text/plain; charset=utf-8', '.json':'application/json; charset=utf-8', '.xml':'application/xml; charset=utf-8'
 };
 
 const DEFAULT_CONTENT = {
@@ -94,7 +94,12 @@ data.projects=Array.isArray(data.projects)?data.projects:SAMPLE_PROJECTS;
 data.laminates=Array.isArray(data.laminates)?data.laminates:[];
 data.leads=Array.isArray(data.leads)?data.leads:[];
 data.socials=data.socials||{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''};
-writeData(data);
+if(!data.admin.envInitialized && process.env.ADMIN_PASSWORD){
+  const p=makePassword(String(process.env.ADMIN_PASSWORD));
+  data.admin.name=String(process.env.ADMIN_NAME||data.admin.name||'MSC Admin').trim().slice(0,80);
+  data.admin.salt=p.salt; data.admin.hash=p.hash; data.admin.envInitialized=true;
+  writeData(data);
+}
 
 const sessions=new Map();
 function sessionCookie(req){ const c=req.headers.cookie||''; const m=c.match(/(?:^|;\s*)msc_admin_session=([^;]+)/); return m?decodeURIComponent(m[1]):''; }
@@ -103,7 +108,7 @@ function requireAuth(req,res){ if(isAuthed(req)) return true; send(res,401,{ok:f
 function setSession(res){ const token=crypto.randomBytes(32).toString('hex'); sessions.set(token,Date.now()); const secure = process.env.NODE_ENV==='production' ? '; Secure' : ''; res.setHeader('Set-Cookie',`msc_admin_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`); }
 function clearSession(req,res){ const token=sessionCookie(req); if(token) sessions.delete(token); res.setHeader('Set-Cookie','msc_admin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'); }
 
-function send(res,status,body,type='application/json'){ res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store'}); res.end(type.includes('json')?JSON.stringify(body):body); }
+function send(res,status,body,type='application/json'){ res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'SAMEORIGIN'}); res.end(type.includes('json')?JSON.stringify(body):body); }
 function readJson(req,maxBytes=150000){ return new Promise((resolve,reject)=>{let data='';req.on('data',c=>{data+=c;if(data.length>maxBytes){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>{try{resolve(JSON.parse(data||'{}'));}catch(e){reject(e);}});req.on('error',reject);}); }
 function safeFileName(name){ const ext=path.extname(name||'').toLowerCase(); const base=path.basename(name||'media',ext).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,60)||'media'; return `${Date.now()}-${Math.random().toString(36).slice(2,9)}-${base}${ext}`; }
 function isAllowedMedia(name,mime){ const ext=path.extname(name||'').toLowerCase(); return ['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext) && /^(video|image)\//.test(mime||''); }
@@ -259,8 +264,27 @@ const server=http.createServer(async(req,res)=>{
   if(/^\/api\/leads\//.test(url.pathname) && req.method==='PUT'){if(!requireAuth(req,res)) return;try{const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.leads.findIndex(x=>x.id===id);if(idx<0)return send(res,404,{ok:false,error:'Lead not found.'});const b=await readJson(req,20000);data.leads[idx]={...data.leads[idx],status:String(b.status||data.leads[idx].status||'New')};writeData(data);return send(res,200,{ok:true,lead:data.leads[idx]});}catch(e){return send(res,400,{ok:false,error:'Could not update lead.'});}}
   if(/^\/api\/leads\//.test(url.pathname) && req.method==='DELETE'){if(!requireAuth(req,res)) return;const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.leads.findIndex(x=>x.id===id);if(idx<0)return send(res,404,{ok:false,error:'Lead not found.'});data.leads.splice(idx,1);writeData(data);return send(res,200,{ok:true});}
 
-  let filePath=path.join(ROOT,url.pathname==='/'?'index.html':url.pathname);
-  if(!filePath.startsWith(ROOT))return send(res,403,{ok:false});
-  try{const stat=fs.statSync(filePath);if(stat.isDirectory())filePath=path.join(filePath,'index.html');const ext=path.extname(filePath).toLowerCase();res.writeHead(200,{'Content-Type':MIME[ext]||'application/octet-stream'});fs.createReadStream(filePath).pipe(res);}catch(e){send(res,404,{ok:false,error:'Not found'});}
+  // SEO files are served explicitly so crawlers always receive the correct MIME type.
+  if(req.method==='GET' && url.pathname==='/robots.txt'){
+    const body='User-agent: *\nAllow: /\n\nSitemap: https://mscinterior.in/sitemap.xml\n';
+    res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+    return res.end(body);
+  }
+  if(req.method==='GET' && url.pathname==='/sitemap.xml'){
+    const body='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://mscinterior.in/</loc>\n  </url>\n</urlset>\n';
+    res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8','Content-Disposition':'inline','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
+    return res.end(body);
+  }
+
+  // Never expose source code, environment examples, CMS data, or repository metadata.
+  const firstSegment=decodeURIComponent(url.pathname).split('/').filter(Boolean)[0]||'';
+  const blockedFiles=new Set(['server.js','package.json','.env','.env.example','README.txt']);
+  const blockedDirs=new Set(['data','.git']);
+  if(blockedFiles.has(firstSegment)||blockedDirs.has(firstSegment)) return send(res,404,{ok:false,error:'Not found'});
+
+  let filePath=path.resolve(ROOT,url.pathname==='/'?'index.html':'.'+url.pathname);
+  const rootWithSep=ROOT.endsWith(path.sep)?ROOT:ROOT+path.sep;
+  if(filePath!==ROOT && !filePath.startsWith(rootWithSep))return send(res,403,{ok:false});
+  try{const stat=fs.statSync(filePath);if(stat.isDirectory())filePath=path.join(filePath,'index.html');const ext=path.extname(filePath).toLowerCase();res.writeHead(200,{'Content-Type':MIME[ext]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'SAMEORIGIN'});fs.createReadStream(filePath).pipe(res);}catch(e){send(res,404,{ok:false,error:'Not found'});}
 });
 server.listen(PORT,()=>console.log(`MSC website running at http://localhost:${PORT}`));
