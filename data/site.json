@@ -2,8 +2,8 @@
   "version": 5,
   "admin": {
     "name": "MSC Admin",
-    "salt": "d4683bccc8cd1ff6a4a27468da348b6c",
-    "hash": "9bc2e14df9732201520593454569745681c91d096301dbf132b03281eee7e1a2456429d2c32d412ce078a8c17178d36c6ae8328d2f3005cb6e339ee04dbe03cb"
+    "salt": "0652a9a83dd0802a535d48d1604c1160",
+    "hash": "59ad224a9ffcadb1efc3c4b97acdf7657ab77c5fcf55be7d9894c39a86dc5472da0fa4e25a0b8a914cb975cce5e82a1335cc7137bf68454aee6c0b954b4721b6"
   },
   "content": {
     "brandName": "MSC",
