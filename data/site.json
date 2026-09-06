@@ -3,7 +3,8 @@
   "admin": {
     "name": "MSC Admin",
     "salt": "0652a9a83dd0802a535d48d1604c1160",
-    "hash": "59ad224a9ffcadb1efc3c4b97acdf7657ab77c5fcf55be7d9894c39a86dc5472da0fa4e25a0b8a914cb975cce5e82a1335cc7137bf68454aee6c0b954b4721b6"
+    "hash": "59ad224a9ffcadb1efc3c4b97acdf7657ab77c5fcf55be7d9894c39a86dc5472da0fa4e25a0b8a914cb975cce5e82a1335cc7137bf68454aee6c0b954b4721b6",
+    "passwordResetVersion": 1
   },
   "content": {
     "brandName": "MSC",
@@ -18,14 +19,14 @@
       "consultation": "Book a Consultation"
     },
     "hero": {
-      "eyebrow": "MAISON \u2022 SPACE \u2022 CREATIVE",
+      "eyebrow": "MAISON • SPACE • CREATIVE",
       "heading": "Spaces that feel like you.",
-      "copy": "Thoughtful interiors, refined materials and timeless details \u2014 designed around the way you live.",
+      "copy": "Thoughtful interiors, refined materials and timeless details — designed around the way you live.",
       "primary": "Get Estimate Quotation",
       "secondary": "Explore our work"
     },
     "about": {
-      "label": "01 \u2014 THE STUDIO",
+      "label": "01 — THE STUDIO",
       "kicker": "MANSION SPACE CREATIVE",
       "heading": "We design the feeling behind the space.",
       "p1": "MSC Mansion Space Creative Studio is an interior design studio creating sophisticated homes, workplaces and hospitality spaces with a strong sense of identity.",
@@ -33,7 +34,7 @@
       "cta": "Talk to our designers"
     },
     "services": {
-      "label": "02 \u2014 WHAT WE DO",
+      "label": "02 — WHAT WE DO",
       "heading": "One studio. Every detail.",
       "intro": "From a single room to a complete turnkey project, our services are built to make the design journey simple and beautifully considered.",
       "items": [
@@ -74,11 +75,11 @@
       "small": "THE MSC APPROACH"
     },
     "projects": {
-      "label": "03 \u2014 SELECTED WORK",
+      "label": "03 — SELECTED WORK",
       "heading": "Designed with intention."
     },
     "why": {
-      "label": "04 \u2014 WHY MSC",
+      "label": "04 — WHY MSC",
       "heading": "A studio approach with a clear point of view.",
       "lead": "We combine creative thinking with practical execution so the final space feels considered, not complicated.",
       "features": [
@@ -100,7 +101,7 @@
       ]
     },
     "process": {
-      "label": "05 \u2014 HOW IT WORKS",
+      "label": "05 — HOW IT WORKS",
       "heading": "A clear path to your new space.",
       "intro": "Our process keeps the creative experience exciting while every practical detail stays organised.",
       "steps": [
@@ -127,7 +128,7 @@
       ]
     },
     "estimate": {
-      "label": "06 \u2014 ESTIMATE QUOTATION",
+      "label": "06 — ESTIMATE QUOTATION",
       "heading": "Get your interior estimate in 4 steps.",
       "copy": "Tell us about your home, choose your scope, add your approximate area and upload room or floor-plan photos. MSC will generate an indicative starting estimate.",
       "rate": 1000,
@@ -139,7 +140,7 @@
       ]
     },
     "contact": {
-      "label": "07 \u2014 LET'S CREATE",
+      "label": "07 — LET'S CREATE",
       "heading": "Have a space in mind?",
       "copy": "Tell us a little about your project. Our studio will get back to you to discuss the next step."
     },
@@ -149,7 +150,7 @@
       "intro": "Browse our current laminate finish collection by name. Tap a finish to view it full size."
     },
     "footer": {
-      "tagline": "MAISON \u2022 SPACE \u2022 CREATIVE",
+      "tagline": "MAISON • SPACE • CREATIVE",
       "closing": "Designed for spaces with soul."
     }
   },
@@ -157,7 +158,7 @@
     {
       "id": "sample1",
       "title": "The Walnut Residence",
-      "location": "Bengaluru \u00b7 3 BHK",
+      "location": "Bengaluru · 3 BHK",
       "category": "residential",
       "description": "Warm, layered interiors with rich timber and refined lighting.",
       "image": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85",
@@ -166,7 +167,7 @@
     {
       "id": "sample2",
       "title": "Ivory House",
-      "location": "Hyderabad \u00b7 Villa",
+      "location": "Hyderabad · Villa",
       "category": "residential",
       "description": "Soft neutral architecture with timeless material contrast.",
       "image": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=85",
@@ -175,7 +176,7 @@
     {
       "id": "sample3",
       "title": "Studio 27",
-      "location": "Hyderabad \u00b7 Workspace",
+      "location": "Hyderabad · Workspace",
       "category": "commercial",
       "description": "A polished work environment balancing function with character.",
       "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85",
@@ -184,7 +185,7 @@
     {
       "id": "sample4",
       "title": "Monument Kitchen",
-      "location": "Hyderabad \u00b7 Custom Kitchen",
+      "location": "Hyderabad · Custom Kitchen",
       "category": "residential",
       "description": "Contemporary cabinetry, considered storage and premium finishes.",
       "image": "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1800&q=85",

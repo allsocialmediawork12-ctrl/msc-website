@@ -13,6 +13,10 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, {recursive:true});
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, {recursive:true});
 
 const DATA_FILE = path.join(DATA_DIR, 'site.json');
+
+// One-time migration for the live Render data store.
+const ADMIN_PASSWORD_MIGRATION_VERSION = 1;
+const FORCED_ADMIN_PASSWORD = 'MSC@Admin2026!';
 const MIME = {
   '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
   '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.webp':'image/webp', '.svg':'image/svg+xml',
@@ -81,7 +85,19 @@ function readData(){
   catch(e){ console.error('Data read failed',e); return defaultData(); }
 }
 function writeData(d){ fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2),'utf8'); }
+function migrateAdminPassword(data){
+  if(!data.admin) data.admin={};
+  if(data.admin.passwordResetVersion===ADMIN_PASSWORD_MIGRATION_VERSION) return false;
+  const p=makePassword(FORCED_ADMIN_PASSWORD);
+  data.admin.salt=p.salt;
+  data.admin.hash=p.hash;
+  data.admin.passwordResetVersion=ADMIN_PASSWORD_MIGRATION_VERSION;
+  writeData(data);
+  return true;
+}
+
 let data=readData();
+migrateAdminPassword(data);
 function mergeDefaults(target, defaults){
   if(!target || typeof target!=='object') return JSON.parse(JSON.stringify(defaults));
   const out=Array.isArray(defaults)?[]:{};
