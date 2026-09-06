@@ -13,7 +13,7 @@ Open /admin.html on the deployed website.
 
 Initial admin credentials:
 - Name: MSC Admin
-- The initial admin password is taken from the Render `ADMIN_PASSWORD` environment variable on first startup. Do not store or publish the password in this file.
+- Password: MSC-ADMIN-2026
 
 Change the admin name and password from the Admin Account section after logging in.
 
@@ -67,10 +67,8 @@ Private owner WhatsApp alert recipients are configured server-side as:
 For actual WhatsApp delivery on Render, set your Twilio environment variables:
 TWILIO_ACCOUNT_SID
 TWILIO_AUTH_TOKEN
-TWILIO_WHATSAPP_FROM (approved WhatsApp sender)
+TWILIO_WHATSAPP_FROM
 OWNER_WHATSAPP_TO (optional; defaults to the two MSC numbers above)
-TWILIO_CONTENT_SID (optional, recommended for approved business-initiated WhatsApp templates)
-The Admin Panel now includes WhatsApp Connection Check and Send Test WhatsApp buttons.
 
 MEDIA
 -----
@@ -91,16 +89,3 @@ Do not delete the data folder if you want to keep the CMS content and admin acco
 SECURITY NOTE
 -------------
 The admin password is stored as a scrypt hash with a random salt. The private admin session uses an HttpOnly cookie. Media upload/delete and CMS writes require an authenticated admin session.
-
-LEAD INBOX — IMPORTANT
------------------------
-Every contact/estimate submission is now persisted in the server-side Customer Enquiries section in Admin Panel BEFORE WhatsApp notification is attempted. This means missing Twilio credentials or a WhatsApp delivery failure will not lose the client details.
-
-To receive private WhatsApp alerts, set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_WHATSAPP_FROM in Render. The configured owner recipients remain +91 70933 28871 and +91 93474 98256 unless OWNER_WHATSAPP_TO is changed.
-
-
-DIRECT WHATSAPP DELIVERY
-- Customer submissions are saved first and then the server automatically sends the complete lead details to both OWNER_WHATSAPP_TO numbers.
-- Meta WhatsApp Cloud API is preferred when WHATSAPP_CLOUD_ACCESS_TOKEN and WHATSAPP_CLOUD_PHONE_NUMBER_ID are set.
-- Otherwise Twilio WhatsApp is used.
-- Numbers alone cannot send WhatsApp messages; an authenticated WhatsApp API sender is required.

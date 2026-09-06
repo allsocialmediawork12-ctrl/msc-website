@@ -16,7 +16,7 @@ const DATA_FILE = path.join(DATA_DIR, 'site.json');
 const MIME = {
   '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
   '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.webp':'image/webp', '.svg':'image/svg+xml',
-  '.mp4':'video/mp4', '.webm':'video/webm', '.mov':'video/quicktime', '.txt':'text/plain; charset=utf-8', '.json':'application/json; charset=utf-8', '.xml':'application/xml; charset=utf-8'
+  '.mp4':'video/mp4', '.webm':'video/webm', '.mov':'video/quicktime', '.txt':'text/plain; charset=utf-8', '.json':'application/json; charset=utf-8'
 };
 
 const DEFAULT_CONTENT = {
@@ -74,7 +74,7 @@ function verifyPassword(password, record) {
 }
 function defaultData(){
   const p=makePassword(process.env.ADMIN_PASSWORD || 'MSC-ADMIN-2026');
-  return {version:6, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], leads:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''}};
+  return {version:5, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''}};
 }
 function readData(){
   try { if(!fs.existsSync(DATA_FILE)){const d=defaultData();fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2));return d;} return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }
@@ -92,14 +92,8 @@ function mergeDefaults(target, defaults){
 data.content=mergeDefaults(data.content,DEFAULT_CONTENT);
 data.projects=Array.isArray(data.projects)?data.projects:SAMPLE_PROJECTS;
 data.laminates=Array.isArray(data.laminates)?data.laminates:[];
-data.leads=Array.isArray(data.leads)?data.leads:[];
 data.socials=data.socials||{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''};
-if(!data.admin.envInitialized && process.env.ADMIN_PASSWORD){
-  const p=makePassword(String(process.env.ADMIN_PASSWORD));
-  data.admin.name=String(process.env.ADMIN_NAME||data.admin.name||'MSC Admin').trim().slice(0,80);
-  data.admin.salt=p.salt; data.admin.hash=p.hash; data.admin.envInitialized=true;
-  writeData(data);
-}
+writeData(data);
 
 const sessions=new Map();
 function sessionCookie(req){ const c=req.headers.cookie||''; const m=c.match(/(?:^|;\s*)msc_admin_session=([^;]+)/); return m?decodeURIComponent(m[1]):''; }
@@ -108,106 +102,19 @@ function requireAuth(req,res){ if(isAuthed(req)) return true; send(res,401,{ok:f
 function setSession(res){ const token=crypto.randomBytes(32).toString('hex'); sessions.set(token,Date.now()); const secure = process.env.NODE_ENV==='production' ? '; Secure' : ''; res.setHeader('Set-Cookie',`msc_admin_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`); }
 function clearSession(req,res){ const token=sessionCookie(req); if(token) sessions.delete(token); res.setHeader('Set-Cookie','msc_admin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'); }
 
-function send(res,status,body,type='application/json'){ res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'SAMEORIGIN'}); res.end(type.includes('json')?JSON.stringify(body):body); }
+function send(res,status,body,type='application/json'){ res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store'}); res.end(type.includes('json')?JSON.stringify(body):body); }
 function readJson(req,maxBytes=150000){ return new Promise((resolve,reject)=>{let data='';req.on('data',c=>{data+=c;if(data.length>maxBytes){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>{try{resolve(JSON.parse(data||'{}'));}catch(e){reject(e);}});req.on('error',reject);}); }
 function safeFileName(name){ const ext=path.extname(name||'').toLowerCase(); const base=path.basename(name||'media',ext).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,60)||'media'; return `${Date.now()}-${Math.random().toString(36).slice(2,9)}-${base}${ext}`; }
 function isAllowedMedia(name,mime){ const ext=path.extname(name||'').toLowerCase(); return ['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext) && /^(video|image)\//.test(mime||''); }
 
-function whatsappConfig(){
-  const sid=String(process.env.TWILIO_ACCOUNT_SID||'').trim();
-  const token=String(process.env.TWILIO_AUTH_TOKEN||'').trim();
-  const fromRaw=String(process.env.TWILIO_WHATSAPP_FROM || process.env.TWILIO_WHATSAPP_NUMBER || process.env.WHATSAPP_FROM || '').trim();
-  const from=fromRaw ? (fromRaw.startsWith('whatsapp:') ? fromRaw : `whatsapp:+${fromRaw.replace(/^\+/,'')}`) : '';
-  const rawTo=String(process.env.OWNER_WHATSAPP_TO || process.env.OWNER_WHATSAPP_NUMBERS || '').trim();
-  const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];
-  const recipients=(rawTo||defaults.join(','))
-    .split(',').map(v=>v.trim()).filter(Boolean)
-    .map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
-  const metaToken=String(process.env.WHATSAPP_CLOUD_ACCESS_TOKEN||process.env.META_WHATSAPP_ACCESS_TOKEN||'').trim();
-  const metaPhoneId=String(process.env.WHATSAPP_CLOUD_PHONE_NUMBER_ID||process.env.META_WHATSAPP_PHONE_NUMBER_ID||'').trim();
-  const metaVersion=String(process.env.WHATSAPP_CLOUD_API_VERSION||'v23.0').trim();
-  const metaTemplateName=String(process.env.WHATSAPP_TEMPLATE_NAME||'').trim();
-  const metaTemplateLanguage=String(process.env.WHATSAPP_TEMPLATE_LANGUAGE||'en_US').trim();
-  return {sid,token,from,recipients,contentSid:String(process.env.TWILIO_CONTENT_SID||'').trim(),metaToken,metaPhoneId,metaVersion,metaTemplateName,metaTemplateLanguage};
-}
-
-function getWhatsAppStatus(){
-  const c=whatsappConfig();
-  const metaReady=!!(c.metaToken&&c.metaPhoneId&&c.recipients.length);
-  const twilioReady=!!(c.sid&&c.token&&c.from&&c.recipients.length);
-  return {
-    provider:metaReady?'Meta WhatsApp Cloud API':(twilioReady?'Twilio WhatsApp':'WhatsApp API'),
-    credentialsPresent:!!((c.sid&&c.token)||(c.metaToken)),
-    senderPresent:!!(c.from||c.metaPhoneId),
-    sender:c.from||c.metaPhoneId||null,
-    recipients:c.recipients,
-    contentTemplatePresent:!!(c.contentSid||c.metaTemplateName),
-    ready:metaReady||twilioReady,
-    metaConfigured:metaReady,
-    twilioConfigured:twilioReady,
-    note:metaReady
-      ? (c.metaTemplateName ? 'Using an approved WhatsApp template through Meta Cloud API.' : 'Using direct Meta Cloud API text. For outbound business-initiated messages, use an approved template.')
-      : (c.contentSid ? 'Using a Twilio Content template.' : 'Using a normal Twilio WhatsApp message body. Business-initiated WhatsApp messages may require an approved template depending on the conversation window/account setup.')
-  };
-}
-
 async function sendWhatsApp(body){
-  const c=whatsappConfig();
-  // Prefer Meta WhatsApp Cloud API when configured.
-  if(c.metaToken && c.metaPhoneId && c.recipients.length){
-    const settled=await Promise.allSettled(c.recipients.map(async toRaw=>{
-      const to=toRaw.replace(/^whatsapp:\+?/,'').replace(/[^0-9]/g,'');
-      const payload=c.metaTemplateName ? {
-        messaging_product:'whatsapp',
-        to,
-        type:'template',
-        template:{
-          name:c.metaTemplateName,
-          language:{code:c.metaTemplateLanguage},
-          components:[{type:'body',parameters:[{type:'text',text:body.slice(0,900)}]}]
-        }
-      } : {
-        messaging_product:'whatsapp',
-        recipient_type:'individual',
-        to,
-        type:'text',
-        text:{preview_url:false,body}
-      };
-      const r=await fetch(`https://graph.facebook.com/${c.metaVersion}/${c.metaPhoneId}/messages`,{
-        method:'POST',
-        headers:{Authorization:`Bearer ${c.metaToken}`,'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
-      });
-      if(!r.ok){const txt=await r.text();throw new Error(txt);}
-      return toRaw;
-    }));
-    const sentTo=settled.filter(x=>x.status==='fulfilled').length;
-    const failedTo=settled.map((x,i)=>x.status==='rejected'?c.recipients[i]:null).filter(Boolean);
-    if(failedTo.length) console.error('Meta WhatsApp notification failures:', settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||String(x.reason)));
-    return {configured:true,sentTo,failedTo,provider:'Meta WhatsApp Cloud API',reason:failedTo.length?'Meta rejected one or more recipients.':''};
-  }
-
-  if(!c.sid||!c.token||!c.from||!c.recipients.length){
-    return {configured:false,sentTo:0,failedTo:c.recipients,reason:'Missing WhatsApp API credentials, sender, or recipients.'};
-  }
-  const auth=Buffer.from(`${c.sid}:${c.token}`).toString('base64');
-  const settled=await Promise.allSettled(c.recipients.map(async to=>{
-    const form={From:c.from,To:to};
-    if(c.contentSid){
-      form.ContentSid=c.contentSid;
-      form.ContentVariables=JSON.stringify({'1':'MSC Website','2':body.slice(0,900)});
-    } else {
-      form.Body=body;
-    }
-    const params=new URLSearchParams(form);
-    const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${c.sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});
-    if(!r.ok){ const txt=await r.text(); throw new Error(txt); }
-    return to;
-  }));
-  const sentTo=settled.filter(x=>x.status==='fulfilled').length;
-  const failedTo=settled.map((x,i)=>x.status==='rejected'?c.recipients[i]:null).filter(Boolean);
-  if(failedTo.length) console.error('WhatsApp notification failures:', settled.filter(x=>x.status==='rejected').map(x=>x.reason?.message||String(x.reason)));
-  return {configured:true,sentTo,failedTo,provider:'Twilio WhatsApp',reason:failedTo.length?'Twilio rejected one or more recipients.':''};
+  const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
+  const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];
+  const recipients=(process.env.OWNER_WHATSAPP_TO || defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
+  if(!sid||!token||!from||!recipients.length) return {configured:false};
+  const auth=Buffer.from(`${sid}:${token}`).toString('base64');
+  const results=await Promise.all(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok) throw new Error(await r.text());return true;}));
+  return {configured:true,sentTo:results.length};
 }
 function leadMessage(lead){return ['🔔 New MSC website enquiry',`Source: ${lead.source||'Website'}`,`Name: ${lead.name||'-'}`,`Phone: ${lead.phone||'-'}`,lead.email?`Email: ${lead.email}`:null,lead.bhk?`BHK: ${lead.bhk}`:null,lead.property?`Property: ${lead.property}`:null,lead.city?`City: ${lead.city}`:null,lead.area?`Area: ${lead.area} sq.ft.`:null,lead.scope?`Scope: ${lead.scope}`:null,lead.finish?`Finish: ${lead.finish}`:null,lead.start?`Start: ${lead.start}`:null,lead.estimate?`Estimate: ${lead.estimate}`:null,lead.project?`Project type: ${lead.project}`:null,lead.message?`Message: ${lead.message}`:null,lead.photoCount!=null?`Photos uploaded: ${lead.photoCount}`:null,`Received: ${new Date().toLocaleString('en-IN')}`].filter(Boolean).join('\n');}
 
@@ -229,9 +136,6 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST' && url.pathname==='/api/content'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,200000);data.content=mergeDefaults(b.content||data.content,DEFAULT_CONTENT);data.socials=b.socials||data.socials;writeData(data);return send(res,200,{ok:true});}catch(e){return send(res,400,{ok:false,error:'Could not save website content.'});}}
   if(req.method==='POST' && url.pathname==='/api/admin/settings'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,30000);if(b.name) data.admin.name=String(b.name).trim().slice(0,80);if(b.newPassword){if(String(b.newPassword).length<8)return send(res,400,{ok:false,error:'Password must be at least 8 characters.'});const p=makePassword(String(b.newPassword));data.admin.salt=p.salt;data.admin.hash=p.hash;}writeData(data);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Could not save admin settings.'});}}
 
-  if(req.method==='GET' && url.pathname==='/api/admin/whatsapp-status'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,status:getWhatsAppStatus()});}
-  if(req.method==='POST' && url.pathname==='/api/admin/whatsapp-test'){if(!requireAuth(req,res)) return;try{const status=getWhatsAppStatus();if(!status.ready)return send(res,400,{ok:false,error:'WhatsApp is not fully configured in Render.',status});const result=await sendWhatsApp('MSC test alert — WhatsApp notification connection is working.');return send(res,result.sentTo>0?200:502,{ok:result.sentTo>0,result,status});}catch(e){return send(res,500,{ok:false,error:e.message||'WhatsApp test failed.'});}}
-
   // Project CRUD
   if(req.method==='POST' && url.pathname==='/api/projects'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,100000);if(!b.title||!b.image)return send(res,400,{ok:false,error:'Project title and image are required.'});const p={id:b.id||crypto.randomUUID(),title:String(b.title),location:String(b.location||''),category:String(b.category||'residential'),description:String(b.description||''),image:String(b.image),videoUrl:String(b.videoUrl||'')};data.projects.unshift(p);writeData(data);return send(res,200,{ok:true,project:p});}catch(e){return send(res,400,{ok:false,error:'Could not add project.'});}}
   if(/^\/api\/projects\//.test(url.pathname) && req.method==='PUT'){if(!requireAuth(req,res)) return;try{const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.projects.findIndex(p=>p.id===id);if(idx<0)return send(res,404,{ok:false,error:'Project not found.'});const b=await readJson(req,100000);data.projects[idx]={...data.projects[idx],...b,id};writeData(data);return send(res,200,{ok:true,project:data.projects[idx]});}catch(e){return send(res,400,{ok:false,error:'Could not update project.'});}}
@@ -246,45 +150,11 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST' && url.pathname==='/api/media'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,35*1024*1024);if(!b.filename||!b.data||!b.mime)return send(res,400,{ok:false,error:'Media filename, mime and data are required.'});if(!isAllowedMedia(b.filename,b.mime))return send(res,400,{ok:false,error:'Only JPG, PNG, WEBP, MP4, WEBM and MOV are supported.'});const match=String(b.data).match(/^data:([^;]+);base64,(.+)$/s);if(!match||match[1]!==b.mime)return send(res,400,{ok:false,error:'Invalid media payload.'});const buffer=Buffer.from(match[2],'base64');if(buffer.length>25*1024*1024)return send(res,413,{ok:false,error:'Media is too large. Maximum is 25 MB.'});const filename=safeFileName(b.filename);fs.writeFileSync(path.join(UPLOADS_DIR,filename),buffer);return send(res,200,{ok:true,url:`/uploads/${filename}`,filename});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not upload media.'});}}
   if(req.method==='DELETE' && url.pathname==='/api/media'){if(!requireAuth(req,res)) return;const raw=url.searchParams.get('file')||'';const filename=path.basename(raw);if(!filename||filename!==raw)return send(res,400,{ok:false,error:'Invalid media file.'});try{if(fs.existsSync(path.join(UPLOADS_DIR,filename)))fs.unlinkSync(path.join(UPLOADS_DIR,filename));return send(res,200,{ok:true});}catch(e){return send(res,500,{ok:false,error:'Could not delete media.'});}}
 
-  // Public lead notifications + persistent lead inbox
-  if(req.method==='POST' && url.pathname==='/api/lead'){try{
-    const lead=await readJson(req,200000);
-    if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});
-    const record={...lead,id:crypto.randomUUID(),status:'New',createdAt:new Date().toISOString()};
-    data.leads.unshift(record);
-    writeData(data);
-    let result={configured:false,sentTo:0,failedTo:[]};
-    try{ result=await sendWhatsApp(leadMessage(record)); }catch(err){ console.error('WhatsApp send failed:',err); }
-    record.notification={configured:result.configured,sentTo:result.sentTo,failedTo:result.failedTo||[],updatedAt:new Date().toISOString()};
-    writeData(data);
-    return send(res,200,{ok:true,saved:true,notified:result.sentTo>0,notificationConfigured:result.configured,sentTo:result.sentTo,leadId:record.id});
-  }catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not save the enquiry.'});}}
+  // Public lead notifications
+  if(req.method==='POST' && url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const result=await sendWhatsApp(leadMessage(lead));if(!result.configured)return send(res,503,{ok:false,error:'WhatsApp notification is not configured on the server yet.'});return send(res,200,{ok:true});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
 
-  if(req.method==='GET' && url.pathname==='/api/leads'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,leads:data.leads||[]});}
-  if(/^\/api\/leads\//.test(url.pathname) && req.method==='PUT'){if(!requireAuth(req,res)) return;try{const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.leads.findIndex(x=>x.id===id);if(idx<0)return send(res,404,{ok:false,error:'Lead not found.'});const b=await readJson(req,20000);data.leads[idx]={...data.leads[idx],status:String(b.status||data.leads[idx].status||'New')};writeData(data);return send(res,200,{ok:true,lead:data.leads[idx]});}catch(e){return send(res,400,{ok:false,error:'Could not update lead.'});}}
-  if(/^\/api\/leads\//.test(url.pathname) && req.method==='DELETE'){if(!requireAuth(req,res)) return;const id=decodeURIComponent(url.pathname.split('/').pop());const idx=data.leads.findIndex(x=>x.id===id);if(idx<0)return send(res,404,{ok:false,error:'Lead not found.'});data.leads.splice(idx,1);writeData(data);return send(res,200,{ok:true});}
-
-  // SEO files are served explicitly so crawlers always receive the correct MIME type.
-  if(req.method==='GET' && url.pathname==='/robots.txt'){
-    const body='User-agent: *\nAllow: /\n\nSitemap: https://mscinterior.in/sitemap.xml\n';
-    res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
-    return res.end(body);
-  }
-  if(req.method==='GET' && url.pathname==='/sitemap.xml'){
-    const body='<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://mscinterior.in/</loc>\n  </url>\n</urlset>\n';
-    res.writeHead(200,{'Content-Type':'application/xml; charset=utf-8','Content-Disposition':'inline','Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});
-    return res.end(body);
-  }
-
-  // Never expose source code, environment examples, CMS data, or repository metadata.
-  const firstSegment=decodeURIComponent(url.pathname).split('/').filter(Boolean)[0]||'';
-  const blockedFiles=new Set(['server.js','package.json','.env','.env.example','README.txt']);
-  const blockedDirs=new Set(['data','.git']);
-  if(blockedFiles.has(firstSegment)||blockedDirs.has(firstSegment)) return send(res,404,{ok:false,error:'Not found'});
-
-  let filePath=path.resolve(ROOT,url.pathname==='/'?'index.html':'.'+url.pathname);
-  const rootWithSep=ROOT.endsWith(path.sep)?ROOT:ROOT+path.sep;
-  if(filePath!==ROOT && !filePath.startsWith(rootWithSep))return send(res,403,{ok:false});
-  try{const stat=fs.statSync(filePath);if(stat.isDirectory())filePath=path.join(filePath,'index.html');const ext=path.extname(filePath).toLowerCase();res.writeHead(200,{'Content-Type':MIME[ext]||'application/octet-stream','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin','X-Frame-Options':'SAMEORIGIN'});fs.createReadStream(filePath).pipe(res);}catch(e){send(res,404,{ok:false,error:'Not found'});}
+  let filePath=path.join(ROOT,url.pathname==='/'?'index.html':url.pathname);
+  if(!filePath.startsWith(ROOT))return send(res,403,{ok:false});
+  try{const stat=fs.statSync(filePath);if(stat.isDirectory())filePath=path.join(filePath,'index.html');const ext=path.extname(filePath).toLowerCase();res.writeHead(200,{'Content-Type':MIME[ext]||'application/octet-stream'});fs.createReadStream(filePath).pipe(res);}catch(e){send(res,404,{ok:false,error:'Not found'});}
 });
 server.listen(PORT,()=>console.log(`MSC website running at http://localhost:${PORT}`));
