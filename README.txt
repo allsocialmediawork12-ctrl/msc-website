@@ -11,9 +11,12 @@ LIVE ADMIN CMS
 --------------
 Open /admin.html on the deployed website.
 
-Initial admin credentials:
-- Name: MSC Admin
-- Password: MSC-ADMIN-2026
+Initial admin access:
+- Login ID: MSCADMIN
+- Admin name: MSC Admin
+- Password: Use the password configured by the server environment / existing deployment.
+
+The admin login now requires both Login ID and password. The login screen and Admin Access section include Show/Hide password controls.
 
 Change the admin name and password from the Admin Account section after logging in.
 
@@ -89,3 +92,16 @@ Do not delete the data folder if you want to keep the CMS content and admin acco
 SECURITY NOTE
 -------------
 The admin password is stored as a scrypt hash with a random salt. The private admin session uses an HttpOnly cookie. Media upload/delete and CMS writes require an authenticated admin session.
+
+
+CLIENT ENQUIRY INBOX
+---------------------
+All consultation form and estimate quotation submissions are now saved to data/site.json and are visible only after admin login under Client Enquiries. The admin panel shows name, phone/WhatsApp, email, city, property, BHK, area, scope, finish, start timing, estimate, message, photo count/names, source and received date. Leads can be refreshed or deleted from the admin panel.
+
+LIGHT LUXURY ADMIN
+------------------
+The admin interface uses a light luxury palette with warm ivory, champagne-gold accents and refined cards.
+
+
+AUTOMATIC OFFICE EMAIL
+Client enquiries are saved in Admin > Client Enquiries and emailed automatically when SMTP is configured. Set MAIL_TO=mscinterior1@gmail.com. For Gmail, use a Google App Password in SMTP_PASS, not the normal Gmail password.

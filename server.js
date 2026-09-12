@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { URL } = require('url');
+const nodemailer = require('nodemailer');
 
 const PORT = Number(process.env.PORT || 3000);
 const ROOT = __dirname;
@@ -15,7 +16,7 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, {recursive:true});
 const DATA_FILE = path.join(DATA_DIR, 'site.json');
 
 // One-time migration for the live Render data store.
-const ADMIN_PASSWORD_MIGRATION_VERSION = 1;
+const ADMIN_PASSWORD_MIGRATION_VERSION = 2;
 const FORCED_ADMIN_PASSWORD = 'MSC@Admin2026!';
 const MIME = {
   '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
@@ -78,7 +79,7 @@ function verifyPassword(password, record) {
 }
 function defaultData(){
   const p=makePassword(process.env.ADMIN_PASSWORD || 'MSC-ADMIN-2026');
-  return {version:5, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''}};
+  return {version:6, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', loginId:process.env.ADMIN_LOGIN_ID || 'MSCADMIN', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''}, leads:[]};
 }
 function readData(){
   try { if(!fs.existsSync(DATA_FILE)){const d=defaultData();fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2));return d;} return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }
@@ -91,6 +92,7 @@ function migrateAdminPassword(data){
   const p=makePassword(FORCED_ADMIN_PASSWORD);
   data.admin.salt=p.salt;
   data.admin.hash=p.hash;
+  data.admin.loginId=process.env.ADMIN_LOGIN_ID || 'MSCADMIN';
   data.admin.passwordResetVersion=ADMIN_PASSWORD_MIGRATION_VERSION;
   writeData(data);
   return true;
@@ -98,6 +100,7 @@ function migrateAdminPassword(data){
 
 let data=readData();
 migrateAdminPassword(data);
+if(!data.admin.loginId) { data.admin.loginId=process.env.ADMIN_LOGIN_ID || 'MSCADMIN'; writeData(data); }
 function mergeDefaults(target, defaults){
   if(!target || typeof target!=='object') return JSON.parse(JSON.stringify(defaults));
   const out=Array.isArray(defaults)?[]:{};
@@ -109,6 +112,7 @@ data.content=mergeDefaults(data.content,DEFAULT_CONTENT);
 data.projects=Array.isArray(data.projects)?data.projects:SAMPLE_PROJECTS;
 data.laminates=Array.isArray(data.laminates)?data.laminates:[];
 data.socials=data.socials||{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''};
+data.leads=Array.isArray(data.leads)?data.leads:[];
 writeData(data);
 
 const sessions=new Map();
@@ -122,6 +126,20 @@ function send(res,status,body,type='application/json'){ res.writeHead(status,{'C
 function readJson(req,maxBytes=150000){ return new Promise((resolve,reject)=>{let data='';req.on('data',c=>{data+=c;if(data.length>maxBytes){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>{try{resolve(JSON.parse(data||'{}'));}catch(e){reject(e);}});req.on('error',reject);}); }
 function safeFileName(name){ const ext=path.extname(name||'').toLowerCase(); const base=path.basename(name||'media',ext).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,60)||'media'; return `${Date.now()}-${Math.random().toString(36).slice(2,9)}-${base}${ext}`; }
 function isAllowedMedia(name,mime){ const ext=path.extname(name||'').toLowerCase(); return ['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext) && /^(video|image)\//.test(mime||''); }
+
+async function sendEmail(lead){
+  const host=process.env.SMTP_HOST;
+  const port=Number(process.env.SMTP_PORT||465);
+  const user=process.env.SMTP_USER;
+  const pass=process.env.SMTP_PASS;
+  const to=process.env.MAIL_TO || 'mscinterior1@gmail.com';
+  if(!host||!user||!pass||!to) return {configured:false};
+  const transporter=nodemailer.createTransport({host,port,secure:String(process.env.SMTP_SECURE||'true')==='true',auth:{user,pass}});
+  const subject=`New MSC Client Enquiry — ${lead.name||'Website'}`;
+  const text=leadMessage(lead);
+  await transporter.sendMail({from:process.env.MAIL_FROM||user,to,replyTo:lead.email||undefined,subject,text});
+  return {configured:true,sentTo:to};
+}
 
 async function sendWhatsApp(body){
   const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
@@ -138,10 +156,10 @@ const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
   // Auth
   if(req.method==='POST' && url.pathname==='/api/admin/login'){
-    try{const b=await readJson(req,20000);if(!verifyPassword(String(b.password||''),data.admin)) return send(res,401,{ok:false,error:'Incorrect password.'});setSession(res);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Invalid login request.'});}
+    try{const b=await readJson(req,20000);if(String(b.loginId||'').trim().toLowerCase() !== String(data.admin.loginId||'MSCADMIN').trim().toLowerCase() || !verifyPassword(String(b.password||''),data.admin)) return send(res,401,{ok:false,error:'Incorrect password.'});setSession(res);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Invalid login request.'});}
   }
   if(req.method==='POST' && url.pathname==='/api/admin/logout'){clearSession(req,res);return send(res,200,{ok:true});}
-  if(req.method==='GET' && url.pathname==='/api/admin/me') return send(res,200,{ok:isAuthed(req),name:data.admin.name});
+  if(req.method==='GET' && url.pathname==='/api/admin/me') return send(res,200,{ok:isAuthed(req),name:data.admin.name,loginId:data.admin.loginId});
 
   // Public content
   if(req.method==='GET' && url.pathname==='/api/content') return send(res,200,{ok:true,content:data.content,socials:data.socials});
@@ -150,7 +168,7 @@ const server=http.createServer(async(req,res)=>{
 
   // Admin settings/content
   if(req.method==='POST' && url.pathname==='/api/content'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,200000);data.content=mergeDefaults(b.content||data.content,DEFAULT_CONTENT);data.socials=b.socials||data.socials;writeData(data);return send(res,200,{ok:true});}catch(e){return send(res,400,{ok:false,error:'Could not save website content.'});}}
-  if(req.method==='POST' && url.pathname==='/api/admin/settings'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,30000);if(b.name) data.admin.name=String(b.name).trim().slice(0,80);if(b.newPassword){if(String(b.newPassword).length<8)return send(res,400,{ok:false,error:'Password must be at least 8 characters.'});const p=makePassword(String(b.newPassword));data.admin.salt=p.salt;data.admin.hash=p.hash;}writeData(data);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Could not save admin settings.'});}}
+  if(req.method==='POST' && url.pathname==='/api/admin/settings'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,30000);if(b.loginId) data.admin.loginId=String(b.loginId).trim().slice(0,80);if(b.name) data.admin.name=String(b.name).trim().slice(0,80);if(b.newPassword){if(String(b.newPassword).length<8)return send(res,400,{ok:false,error:'Password must be at least 8 characters.'});const p=makePassword(String(b.newPassword));data.admin.salt=p.salt;data.admin.hash=p.hash;}writeData(data);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Could not save admin settings.'});}}
 
   // Project CRUD
   if(req.method==='POST' && url.pathname==='/api/projects'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,100000);if(!b.title||!b.image)return send(res,400,{ok:false,error:'Project title and image are required.'});const p={id:b.id||crypto.randomUUID(),title:String(b.title),location:String(b.location||''),category:String(b.category||'residential'),description:String(b.description||''),image:String(b.image),videoUrl:String(b.videoUrl||'')};data.projects.unshift(p);writeData(data);return send(res,200,{ok:true,project:p});}catch(e){return send(res,400,{ok:false,error:'Could not add project.'});}}
@@ -166,8 +184,10 @@ const server=http.createServer(async(req,res)=>{
   if(req.method==='POST' && url.pathname==='/api/media'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,35*1024*1024);if(!b.filename||!b.data||!b.mime)return send(res,400,{ok:false,error:'Media filename, mime and data are required.'});if(!isAllowedMedia(b.filename,b.mime))return send(res,400,{ok:false,error:'Only JPG, PNG, WEBP, MP4, WEBM and MOV are supported.'});const match=String(b.data).match(/^data:([^;]+);base64,(.+)$/s);if(!match||match[1]!==b.mime)return send(res,400,{ok:false,error:'Invalid media payload.'});const buffer=Buffer.from(match[2],'base64');if(buffer.length>25*1024*1024)return send(res,413,{ok:false,error:'Media is too large. Maximum is 25 MB.'});const filename=safeFileName(b.filename);fs.writeFileSync(path.join(UPLOADS_DIR,filename),buffer);return send(res,200,{ok:true,url:`/uploads/${filename}`,filename});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not upload media.'});}}
   if(req.method==='DELETE' && url.pathname==='/api/media'){if(!requireAuth(req,res)) return;const raw=url.searchParams.get('file')||'';const filename=path.basename(raw);if(!filename||filename!==raw)return send(res,400,{ok:false,error:'Invalid media file.'});try{if(fs.existsSync(path.join(UPLOADS_DIR,filename)))fs.unlinkSync(path.join(UPLOADS_DIR,filename));return send(res,200,{ok:true});}catch(e){return send(res,500,{ok:false,error:'Could not delete media.'});}}
 
-  // Public lead notifications
-  if(req.method==='POST' && url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const result=await sendWhatsApp(leadMessage(lead));if(!result.configured)return send(res,503,{ok:false,error:'WhatsApp notification is not configured on the server yet.'});return send(res,200,{ok:true});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
+  // Client enquiries / lead inbox
+  if(req.method==='GET' && url.pathname==='/api/leads'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,leads:data.leads||[]});}
+  if(req.method==='DELETE' && /^\/api\/leads\//.test(url.pathname)){if(!requireAuth(req,res)) return;const id=decodeURIComponent(url.pathname.split('/').pop());const before=(data.leads||[]).length;data.leads=(data.leads||[]).filter(x=>x.id!==id);if(data.leads.length===before)return send(res,404,{ok:false,error:'Client enquiry not found.'});writeData(data);return send(res,200,{ok:true});}
+  if(req.method==='POST' && url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const saved={id:crypto.randomUUID(),receivedAt:new Date().toISOString(),status:'New',source:String(lead.source||'Website'),name:String(lead.name||''),phone:String(lead.phone||''),email:String(lead.email||''),bhk:String(lead.bhk||''),property:String(lead.property||''),city:String(lead.city||''),area:String(lead.area||''),scope:String(lead.scope||''),finish:String(lead.finish||''),start:String(lead.start||''),estimate:String(lead.estimate||''),project:String(lead.project||''),message:String(lead.message||''),photoCount:Number(lead.photoCount||0),photoNames:Array.isArray(lead.photoNames)?lead.photoNames.slice(0,10).map(String):[]};data.leads=data.leads||[];data.leads.unshift(saved);data.leads=data.leads.slice(0,500);writeData(data);let notification={configured:false}, emailNotification={configured:false};try{notification=await sendWhatsApp(leadMessage(saved));}catch(e){console.error('WhatsApp notification failed',e.message);}try{emailNotification=await sendEmail(saved);}catch(e){console.error('Email notification failed',e.message);emailNotification={configured:true,sentTo:false};}return send(res,200,{ok:true,saved:true,notificationConfigured:notification.configured||false,emailConfigured:emailNotification.configured||false,emailSent:emailNotification.sentTo||false});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
 
   let filePath=path.join(ROOT,url.pathname==='/'?'index.html':url.pathname);
   if(!filePath.startsWith(ROOT))return send(res,403,{ok:false});

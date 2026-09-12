@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "description": "MSC interior design website with private lead notification backend",
-  "scripts": {"start":"node server.js"},
-  "engines": {"node": ">=18"}
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "nodemailer": "^7.0.6"
+  }
 }

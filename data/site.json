@@ -2,9 +2,10 @@
   "version": 5,
   "admin": {
     "name": "MSC Admin",
-    "salt": "0652a9a83dd0802a535d48d1604c1160",
-    "hash": "59ad224a9ffcadb1efc3c4b97acdf7657ab77c5fcf55be7d9894c39a86dc5472da0fa4e25a0b8a914cb975cce5e82a1335cc7137bf68454aee6c0b954b4721b6",
-    "passwordResetVersion": 1
+    "salt": "fef76ca902321b421e9b0c2f797a6288",
+    "hash": "4a7c264cd1e7a58ee970e3a1f503f15acbd2b865c4083fa1f2580a8ca86efbe5ec2c5d193b47b8294a3b9ed13203761957221be7ca7235a2a66096f0d66c76b2",
+    "passwordResetVersion": 2,
+    "loginId": "MSCADMIN"
   },
   "content": {
     "brandName": "MSC",
@@ -198,5 +199,6 @@
     "facebookUrl": "",
     "youtubeUrl": "",
     "pinterestUrl": ""
-  }
+  },
+  "leads": []
 }
