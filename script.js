@@ -6,7 +6,7 @@ const backTop = document.getElementById('backTop');
 const toast = document.getElementById('toast');
 const year = document.getElementById('year');
 
-window.addEventListener('load', () => setTimeout(() => loader.classList.add('hide'), 450));
+let MSC_LOADER_DURATION=4500; window.addEventListener('load', () => setTimeout(() => loader.classList.add('hide'), MSC_LOADER_DURATION));
 year.textContent = new Date().getFullYear();
 
 window.addEventListener('scroll', () => {
@@ -328,7 +328,7 @@ document.head.appendChild(revealStyle);
   try {
     const social=JSON.parse(localStorage.getItem('mscOwnerSocialV1')||'null');
     if(!social) return;
-    const map={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest'};
+    const map={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest',whatsappUrl:'socialWhatsapp'};
     Object.entries(map).forEach(([key,id])=>{
       const el=document.getElementById(id);
       if(el && social[key]){ el.href=social[key]; el.classList.remove('hidden-social'); }
@@ -376,7 +376,7 @@ document.head.appendChild(revealStyle);
     // Header / navigation
     const brandImg=document.querySelector('.brand img'); if(brandImg) brandImg.alt=(c.brandName||'MSC')+' '+(c.brandSubtitle||'');
     setText('.brand-text strong',c.brandName); setText('.brand-text small',c.brandSubtitle);
-    const navVals=[c.nav?.services,c.nav?.projects,c.nav?.about,c.nav?.process,c.nav?.contact];
+    const navVals=[c.nav?.home,c.nav?.services,c.nav?.projects,c.nav?.about,c.nav?.process,c.nav?.contact];
     document.querySelectorAll('.desktop-nav a').forEach((a,i)=>{if(navVals[i]) a.textContent=navVals[i];});
     setText('.header-quote',c.nav?.estimate+' ↗'); setText('.header-cta',c.nav?.consultation+' ↗');
 
@@ -392,7 +392,7 @@ document.head.appendChild(revealStyle);
     setText('#services .section-label',c.services?.label); setText('#services .section-head h2',c.services?.heading); setText('#services .section-head > p',c.services?.intro);
     const serviceGrid=document.querySelector('#services .service-grid');
     if(serviceGrid && Array.isArray(c.services?.items)){
-      serviceGrid.innerHTML=c.services.items.map((it,i)=>`<article class="service-card ${i===0?'featured':''}"><div class="service-number">${esc(it.number||String(i+1).padStart(2,'0'))}</div><h3>${esc(it.title||'Service')}</h3><p>${esc(it.description||'')}</p><a href="#contact">Explore service <span>↗</span></a></article>`).join('');
+      serviceGrid.innerHTML=c.services.items.map((it,i)=>`<article class="service-card ${i===0?'featured':''}">${it.image?`<div class="service-image"><img src="${esc(it.image)}" alt="${esc(it.title||'MSC service')}" loading="lazy"></div>`:``}<div class="service-number">${esc(it.number||String(i+1).padStart(2,'0'))}</div><h3>${esc(it.title||'Service')}</h3><p>${esc(it.description||'')}</p><a href="#contact">Explore service <span>↗</span></a></article>`).join('');
     }
 
     // Statement / Projects / Why / Process
@@ -416,11 +416,15 @@ document.head.appendChild(revealStyle);
     if(grid){grid.innerHTML=projects.map((p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`;return `<article class="project-card ${i===0?'tall':''}" data-category="${esc(p.category||'residential')}">${media}<div class="project-info"><span>${esc(p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;}).join('');}
     const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.filter===filter.dataset.filter?'':'none');});
 
+    // Social media
+    const socials=contentData.socials||{}; const socialMap={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest',whatsappUrl:'socialWhatsapp'}; Object.entries(socialMap).forEach(([key,id])=>{const el=document.getElementById(id);if(el){if(socials[key]){el.href=socials[key];el.classList.remove('hidden-social');}else el.classList.add('hidden-social');}}); if(socials.whatsappUrl){const el=document.getElementById('floatWhatsapp');if(el){el.href=socials.whatsappUrl;el.classList.remove('hidden-social');}} if(socials.instagramUrl){const el=document.getElementById('floatInstagram');if(el){el.href=socials.instagramUrl;el.classList.remove('hidden-social');}} const socialLinks=document.getElementById('socialLinks');if(socialLinks)socialLinks.dataset.style=socials.iconStyle||'circle';
+    // Demo video and loader
+    const siteSettings=contentData.siteSettings||{}; MSC_LOADER_DURATION=Math.min(8000,Math.max(1500,Number(siteSettings.loaderDuration||4500))); const videoShell=document.getElementById('demoVideoShell'); if(videoShell&&siteSettings.demoVideoUrl)videoShell.innerHTML=`<video class="demo-video" src="${esc(siteSettings.demoVideoUrl)}" controls muted playsinline preload="metadata"></video>`;
     // Laminates
     setText('#laminateLabel',c.laminate?.label); const lh=document.querySelector('#laminateHeading'); if(lh&&c.laminate?.heading){const words=String(c.laminate.heading).split(/\s+/);const last=esc(words.pop()||'');lh.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>';}
     setText('#laminateIntro',c.laminate?.intro);
     const lgrid=document.getElementById('laminateGridPublic'), lempty=document.getElementById('laminateEmpty'); const laminates=laminateData.laminates||[];
-    if(lgrid) lgrid.innerHTML=laminates.map(x=>`<figure class="laminate-public-card"><img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy"><figcaption>${esc(x.name)}</figcaption></figure>`).join(''); if(lempty) lempty.style.display=laminates.length?'none':'block';
+    if(lgrid) lgrid.innerHTML=laminates.map(x=>`<figure class="laminate-public-card"><img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy"><figcaption><strong>${esc(x.name)}</strong>${x.material?`<span>${esc(x.material)}</span>`:``}${x.thickness?`<span>Thickness: ${esc(x.thickness)}</span>`:``}${x.finish?`<span>Finish: ${esc(x.finish)}</span>`:``}${x.specification?`<small>${esc(x.specification)}</small>`:``}</figcaption></figure>`).join(''); if(lempty) lempty.style.display=laminates.length?'none':'block';
 
     // Update estimate rate after CMS settings are loaded.
     const note=document.getElementById('estimateNote'); if(note) note.textContent=`Estimate basis: ₹${Number(c.estimate?.rate||1000).toLocaleString('en-IN')} per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.`;
@@ -431,23 +435,3 @@ document.head.appendChild(revealStyle);
 })();
 
 
-/* MSC AI concierge */
-(function(){
-  const launch=document.getElementById('mscAiLaunch'), panel=document.getElementById('mscAiPanel'), close=document.getElementById('mscAiClose');
-  const form=document.getElementById('mscAiForm'), input=document.getElementById('mscAiInput'), messages=document.getElementById('mscAiMessages');
-  if(!launch||!panel||!form)return;
-  function toggle(open){panel.classList.toggle('open',open);panel.setAttribute('aria-hidden',String(!open));if(open)setTimeout(()=>input?.focus(),80);}
-  launch.addEventListener('click',()=>toggle(!panel.classList.contains('open'))); close?.addEventListener('click',()=>toggle(false));
-  function add(text,who){const el=document.createElement('div');el.className='msc-ai-msg '+who;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el;}
-  async function ask(text){
-    add(text,'user'); const thinking=add('Thinking…','ai'); input.disabled=true;
-    try{
-      const r=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
-      const data=await r.json(); if(!r.ok) throw new Error(data.error||'Assistant unavailable');
-      thinking.textContent=data.reply||'Please contact our studio for assistance.';
-    }catch(e){thinking.textContent=e?.message||'I’m unable to connect right now. Please use the consultation form and our team will get back to you.';console.warn(e);}
-    input.disabled=false;input.focus();messages.scrollTop=messages.scrollHeight;
-  }
-  form.addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(v){input.value='';ask(v);}});
-  document.querySelectorAll('.msc-ai-suggestions button').forEach(b=>b.addEventListener('click',()=>ask(b.textContent)));
-})();

@@ -108,24 +108,13 @@ Client enquiries are saved in Admin > Client Enquiries and emailed automatically
 
 
 AI CHAT ASSISTANT
-Set OPENAI_API_KEY on the server to enable the visible 'Ask MSC AI' assistant. Optional: set OPENAI_MODEL (default: gpt-5.6-luna).
 
 
 AI TROUBLESHOOTING
 ------------------
-If the public chat shows “MSC AI is not connected yet”, the server does not have OPENAI_API_KEY.
-Set OPENAI_API_KEY in the deployment environment (for Render: Dashboard > Service > Environment).
-Optional: set OPENAI_MODEL=gpt-5.6-luna. Then redeploy/restart the Node service.
-The browser chat calls POST /api/ai-chat, so the website must be deployed with the Node server.js backend; a static-only host will not run this endpoint.
-For diagnostics, open /api/ai-health on the deployed domain. It reports whether the server sees an API key and which model it is configured to use; it never exposes the key.
 
 AI KEY CONFIGURATION
 --------------------
-This distribution does NOT include a .env file or an OpenAI secret. Set OPENAI_API_KEY only in your hosting provider's server environment (for Render: Dashboard > Service > Environment). Never put the key in frontend JavaScript or commit it to a repository. If an API key has been shared publicly, rotate/revoke it and replace OPENAI_API_KEY.
 
 
 AI troubleshooting (fixed build):
-- Open /api/ai-health on the deployed domain. The endpoint now validates the configured OpenAI key against the OpenAI API and reports keyValid without exposing the secret.
-- If keyValid is false, update OPENAI_API_KEY in the hosting service environment and perform a fresh deploy/restart. Editing only a local .env file will not change an already deployed server.
-- The chat now converts OpenAI 401/403 errors into safe, visitor-friendly messages instead of displaying the raw API error.
-- The server accepts accidental surrounding quotes or a leading 'Bearer ' prefix in OPENAI_API_KEY and normalizes them before use.

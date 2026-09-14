@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="page-loader" id="loader"><span>MSC</span></div>
+  <div class="page-loader" id="loader"><div class="loader-logo"><img src="assets/msc-logo-light.png" alt="MSC"><span>MAISON • SPACE • CREATIVE</span></div></div>
 
   <header class="site-header" id="siteHeader">
     <a class="brand" href="#home" aria-label="MSC home">
@@ -20,6 +20,7 @@
     </a>
 
     <nav class="desktop-nav" aria-label="Primary navigation">
+      <a href="#home">Home</a>
       <a href="#services">Services</a>
       <a href="#projects">Projects</a>
       <a href="#about">About</a>
@@ -186,10 +187,18 @@
       <p class="laminate-empty" id="laminateEmpty">Our finish library is being curated. Please check back soon.</p>
     </section>
 
+    <section class="work-film section-pad" id="workFilm">
+      <div class="section-head">
+        <div><div class="section-label">06 — MSC IN MOTION</div><h2>See our work<br><em>come to life.</em></h2></div>
+        <p>A short look at the craft, materials and finished spaces behind MSC projects.</p>
+      </div>
+      <div class="demo-video-shell" id="demoVideoShell"><div class="demo-video-placeholder" id="demoVideoPlaceholder"><span>MSC</span><p>Work video can be added from the Admin Panel.</p></div></div>
+    </section>
+
     <section class="estimate-section section-pad" id="estimate">
       <div class="estimate-teaser">
         <div>
-          <div class="section-label">06 — ESTIMATE QUOTATION</div>
+          <div class="section-label">07 — ESTIMATE QUOTATION</div>
           <h2>Get your interior<br><em>estimate in 4 steps.</em></h2>
           <p>Tell us about your home, choose your scope, add your approximate area and upload room or floor-plan photos. MSC will generate an indicative starting range.</p>
         </div>
@@ -316,7 +325,7 @@
       <div class="consultation-bg"></div>
       <div class="consultation-inner">
         <div>
-          <div class="section-label light-label">07 — LET'S CREATE</div>
+          <div class="section-label light-label">08 — LET'S CREATE</div>
           <h2>Have a space<br>in <em>mind?</em></h2>
           <p>Tell us a little about your project. Our studio will get back to you to discuss the next step.</p>
         </div>
@@ -342,28 +351,18 @@
           <a id="socialFacebook" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Facebook</a>
           <a id="socialYoutube" href="#" target="_blank" rel="noopener" class="social-link hidden-social">YouTube</a>
           <a id="socialPinterest" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Pinterest</a>
+          <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" class="social-link hidden-social">WhatsApp</a>
         </div>
       </div>
     </div>
     <div class="footer-bottom"><span>© <span id="year"></span> MSC Mansion Space Creative Studio</span><span>Designed for spaces with soul.</span></div>
   </footer>
 
-
-  <!-- MSC AI Chat Assistant -->
-  <div class="msc-ai" id="mscAi">
-    <button class="msc-ai-launch" id="mscAiLaunch" type="button" aria-label="Open MSC AI assistant">
-      <span class="msc-ai-spark">✦</span><span>Ask MSC AI</span>
-    </button>
-    <section class="msc-ai-panel" id="mscAiPanel" aria-label="MSC AI chat" aria-hidden="true">
-      <div class="msc-ai-head"><div><strong>MSC AI Concierge</strong><small>Interior design assistant</small></div><button id="mscAiClose" type="button" aria-label="Close">×</button></div>
-      <div class="msc-ai-messages" id="mscAiMessages"><div class="msc-ai-msg ai">Hello. I’m MSC’s AI design concierge. Ask me about our interiors, services, process, estimates, or booking a consultation.</div></div>
-      <div class="msc-ai-suggestions"><button type="button">What services do you offer?</button><button type="button">How does the estimate work?</button><button type="button">Book a consultation</button></div>
-      <form class="msc-ai-form" id="mscAiForm"><input id="mscAiInput" name="message" autocomplete="off" placeholder="Ask about your project..." required><button type="submit" aria-label="Send">↗</button></form>
-      <small class="msc-ai-note">AI assistant • For project-specific pricing, our team will confirm after consultation.</small>
-    </section>
-  </div>
-
   <div class="toast" id="toast">Thank you — your consultation request is ready to be connected.</div>
+  <div class="floating-socials" id="floatingSocials" aria-label="Social media quick links">
+    <a id="floatWhatsapp" class="float-social whatsapp hidden-social" target="_blank" rel="noopener" aria-label="WhatsApp">WA</a>
+    <a id="floatInstagram" class="float-social hidden-social" target="_blank" rel="noopener" aria-label="Instagram">IG</a>
+  </div>
   <button class="back-top" id="backTop" aria-label="Back to top">↑</button>
   <script src="script.js"></script>
 </body>

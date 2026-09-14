@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 8,
   "admin": {
     "name": "MSC Admin",
     "salt": "fef76ca902321b421e9b0c2f797a6288",
@@ -11,6 +11,7 @@
     "brandName": "MSC",
     "brandSubtitle": "Mansion Space Creative Studio",
     "nav": {
+      "home": "Home",
       "services": "Services",
       "projects": "Projects",
       "about": "About",
@@ -42,32 +43,38 @@
         {
           "number": "01",
           "title": "Full Home Interiors",
-          "description": "Complete design direction for living rooms, bedrooms, kitchens, wardrobes and every connecting space."
+          "description": "Complete design direction for living rooms, bedrooms, kitchens, wardrobes and every connecting space.",
+          "image": "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=85"
         },
         {
           "number": "02",
           "title": "Modular Kitchens",
-          "description": "Elegant, practical kitchens planned around your cooking style, storage needs and aesthetic."
+          "description": "Elegant, practical kitchens planned around your cooking style, storage needs and aesthetic.",
+          "image": "https://images.unsplash.com/photo-1556912167-f556f1f39fdf?auto=format&fit=crop&w=1000&q=85"
         },
         {
           "number": "03",
           "title": "Custom Wardrobes",
-          "description": "Made-to-measure wardrobes, storage and TV units with precise proportions and premium finishes."
+          "description": "Made-to-measure wardrobes, storage and TV units with precise proportions and premium finishes.",
+          "image": "https://images.unsplash.com/photo-1558997519-83ea9252edf8?auto=format&fit=crop&w=1000&q=85"
         },
         {
           "number": "04",
           "title": "False Ceiling & Lighting",
-          "description": "Layered ceilings, profile lights and feature lighting designed to make every room feel finished."
+          "description": "Layered ceilings, profile lights and feature lighting designed to make every room feel finished.",
+          "image": "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1000&q=85"
         },
         {
           "number": "05",
           "title": "Complete Renovation",
-          "description": "Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling."
+          "description": "Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling.",
+          "image": "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1000&q=85"
         },
         {
           "number": "06",
           "title": "Commercial Interiors",
-          "description": "Workspaces, studios and commercial environments designed for brand presence, comfort and performance."
+          "description": "Workspaces, studios and commercial environments designed for brand presence, comfort and performance.",
+          "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1000&q=85"
         }
       ]
     },
@@ -198,7 +205,65 @@
     "instagramUrl": "",
     "facebookUrl": "",
     "youtubeUrl": "",
-    "pinterestUrl": ""
+    "pinterestUrl": "",
+    "whatsappUrl": "",
+    "iconStyle": "circle"
   },
-  "leads": []
+  "leads": [
+    {
+      "id": "4eccf763-eff6-4d04-ba28-ef287455a540",
+      "receivedAt": "2026-09-14T06:03:26.238Z",
+      "status": "New",
+      "source": "Website",
+      "name": "Test Client",
+      "phone": "9999999999",
+      "email": "allsocialmediawork12@gmail.com",
+      "bhk": "",
+      "property": "",
+      "city": "",
+      "area": "",
+      "scope": "",
+      "finish": "",
+      "start": "",
+      "estimate": "",
+      "project": "Full Home Interior",
+      "message": "",
+      "photoCount": 0,
+      "photoNames": []
+    },
+    {
+      "id": "9466a9f2-f662-4bdb-afd7-5db209b63794",
+      "receivedAt": "2026-09-14T06:00:39.463Z",
+      "status": "New",
+      "source": "Website",
+      "name": "Test Client",
+      "phone": "9999999999",
+      "email": "allsocialmediawork12@gmail.com",
+      "bhk": "",
+      "property": "",
+      "city": "",
+      "area": "",
+      "scope": "",
+      "finish": "",
+      "start": "",
+      "estimate": "",
+      "project": "Full Home Interior",
+      "message": "test",
+      "photoCount": 0,
+      "photoNames": []
+    }
+  ],
+  "siteSettings": {
+    "demoVideoUrl": "",
+    "loaderDuration": 4500
+  },
+  "emailSettings": {
+    "host": "",
+    "port": 465,
+    "secure": true,
+    "user": "",
+    "pass": "",
+    "to": "mscinterior1@gmail.com",
+    "from": ""
+  }
 }
