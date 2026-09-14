@@ -2,7 +2,7 @@
   "name": "msc-mansion-space-creative-studio",
   "version": "1.0.0",
   "private": true,
-  "description": "MSC interior design website with private lead notification backend",
+  "description": "MSC interior design website with private lead notification backend using Resend HTTPS email API",
   "scripts": {
     "start": "node server.js"
   },
@@ -10,7 +10,6 @@
     "node": ">=18"
   },
   "dependencies": {
-    "nodemailer": "^7.0.6",
     "dotenv": "^17.2.2"
   }
 }

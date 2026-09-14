@@ -209,50 +209,7 @@
     "whatsappUrl": "",
     "iconStyle": "circle"
   },
-  "leads": [
-    {
-      "id": "4eccf763-eff6-4d04-ba28-ef287455a540",
-      "receivedAt": "2026-09-14T06:03:26.238Z",
-      "status": "New",
-      "source": "Website",
-      "name": "Test Client",
-      "phone": "9999999999",
-      "email": "allsocialmediawork12@gmail.com",
-      "bhk": "",
-      "property": "",
-      "city": "",
-      "area": "",
-      "scope": "",
-      "finish": "",
-      "start": "",
-      "estimate": "",
-      "project": "Full Home Interior",
-      "message": "",
-      "photoCount": 0,
-      "photoNames": []
-    },
-    {
-      "id": "9466a9f2-f662-4bdb-afd7-5db209b63794",
-      "receivedAt": "2026-09-14T06:00:39.463Z",
-      "status": "New",
-      "source": "Website",
-      "name": "Test Client",
-      "phone": "9999999999",
-      "email": "allsocialmediawork12@gmail.com",
-      "bhk": "",
-      "property": "",
-      "city": "",
-      "area": "",
-      "scope": "",
-      "finish": "",
-      "start": "",
-      "estimate": "",
-      "project": "Full Home Interior",
-      "message": "test",
-      "photoCount": 0,
-      "photoNames": []
-    }
-  ],
+  "leads": [],
   "siteSettings": {
     "demoVideoUrl": "",
     "loaderDuration": 4500

@@ -118,3 +118,19 @@ AI KEY CONFIGURATION
 
 
 AI troubleshooting (fixed build):
+
+EMAIL / RENDER DEPLOYMENT NOTE
+------------------------------
+The lead notification system now uses the Resend HTTPS Email API instead of Gmail SMTP. This avoids SMTP port restrictions on Render Free Web Services.
+
+Add these Environment Variables in the existing Render service:
+  RESEND_API_KEY=re_...
+  RESEND_FROM=MSC Website <onboarding@resend.dev>
+  MAIL_TO=mscinterior1@gmail.com
+  TWILIO_ENABLED=false
+
+Keep RESEND_API_KEY private. Do not commit it to GitHub or paste it into the website/admin database.
+
+For production sender branding, verify your own domain in Resend and set RESEND_FROM to an address on that verified domain. Resend documents Node.js/Express email sending at https://resend.com/nodejs and https://resend.com/express.
+
+The website continues to save every enquiry to data/site.json even if email is temporarily unavailable. WhatsApp is disabled by default to prevent invalid Twilio credentials from generating repeated notification errors.

@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { URL } = require('url');
-const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const PORT = Number(process.env.PORT || 3000);
@@ -134,25 +133,30 @@ function safeFileName(name){ const ext=path.extname(name||'').toLowerCase(); con
 function isAllowedMedia(name,mime){ const ext=path.extname(name||'').toLowerCase(); return ['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext) && /^(video|image)\//.test(mime||''); }
 
 async function sendEmail(lead){
-  const cfg=data.emailSettings||{};
-  const host=process.env.SMTP_HOST || cfg.host;
-  const port=Number(process.env.SMTP_PORT || cfg.port || 465);
-  const user=process.env.SMTP_USER || cfg.user;
-  const pass=process.env.SMTP_PASS || cfg.pass;
-  const to=process.env.MAIL_TO || cfg.to || 'mscinterior1@gmail.com';
-  if(!host||!user||!pass||!to) return {configured:false};
-  const transporter=nodemailer.createTransport({host,port,secure:String(process.env.SMTP_SECURE||'true')==='true',auth:{user,pass}});
+  const to=process.env.MAIL_TO || 'mscinterior1@gmail.com';
+  const apiKey=process.env.RESEND_API_KEY;
+  const from=process.env.RESEND_FROM || 'MSC Website <onboarding@resend.dev>';
+  if(!apiKey || !to) return {configured:false,provider:'resend'};
   const subject=`New MSC Client Enquiry — ${lead.name||'Website'}`;
   const text=leadMessage(lead);
-  await transporter.sendMail({from:process.env.MAIL_FROM||cfg.from||user,to,replyTo:lead.email||undefined,subject,text});
-  return {configured:true,sentTo:to};
+  const html=`<div style="font-family:Arial,sans-serif;line-height:1.55;color:#222"><h2>New MSC website enquiry</h2><pre style="white-space:pre-wrap;font-family:Arial,sans-serif">${escapeHtml(text)}</pre></div>`;
+  const response=await fetch('https://api.resend.com/emails',{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'},
+    body:JSON.stringify({from,to:[to],reply_to:lead.email||undefined,subject,text,html})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok) throw new Error(result?.message || result?.name || `Resend HTTP ${response.status}`);
+  return {configured:true,sentTo:to,provider:'resend',id:result?.id||null};
 }
+
+function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 async function sendWhatsApp(body){
   const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
   const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];
   const recipients=(process.env.OWNER_WHATSAPP_TO || defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
-  if(!sid||!token||!from||!recipients.length) return {configured:false};
+  if(String(process.env.TWILIO_ENABLED||'false').toLowerCase()!=='true' || !sid||!token||!from||!recipients.length) return {configured:false,disabled:true};
   const auth=Buffer.from(`${sid}:${token}`).toString('base64');
   const results=await Promise.all(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok) throw new Error(await r.text());return true;}));
   return {configured:true,sentTo:results.length};
@@ -171,14 +175,14 @@ const server=http.createServer(async(req,res)=>{
   // Public content
   if(req.method==='GET' && url.pathname==='/api/content') return send(res,200,{ok:true,content:data.content,socials:data.socials,siteSettings:data.siteSettings});
   if(req.method==='GET' && url.pathname==='/api/site-settings') return send(res,200,{ok:true,siteSettings:data.siteSettings});
-  if(req.method==='GET' && url.pathname==='/api/email-settings'){if(!requireAuth(req,res)) return;const e=data.emailSettings||{};return send(res,200,{ok:true,emailSettings:{host:e.host||'',port:e.port||465,secure:e.secure!==false,user:e.user||'',to:e.to||'',from:e.from||'',configured:!!(e.host&&e.user&&e.pass&&e.to)}});}
+  if(req.method==='GET' && url.pathname==='/api/email-settings'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,emailSettings:{provider:'resend',to:process.env.MAIL_TO||'mscinterior1@gmail.com',from:process.env.RESEND_FROM||'MSC Website <onboarding@resend.dev>',configured:!!process.env.RESEND_API_KEY}});}
   if(req.method==='GET' && url.pathname==='/api/projects') return send(res,200,{ok:true,projects:data.projects});
   if(req.method==='GET' && url.pathname==='/api/laminates') return send(res,200,{ok:true,laminates:data.laminates});
 
   // Admin settings/content
   if(req.method==='POST' && url.pathname==='/api/content'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,200000);data.content=mergeDefaults(b.content||data.content,DEFAULT_CONTENT);data.socials={...data.socials,...(b.socials||{})};data.siteSettings={...data.siteSettings,...(b.siteSettings||{})};writeData(data);return send(res,200,{ok:true});}catch(e){return send(res,400,{ok:false,error:'Could not save website content.'});}}
-  if(req.method==='POST' && url.pathname==='/api/email-settings'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,30000);data.emailSettings={...data.emailSettings,host:String(b.host||'').trim(),port:Number(b.port||465),secure:Boolean(b.secure),user:String(b.user||'').trim(),to:String(b.to||'').trim(),from:String(b.from||'').trim(),pass:b.pass!==undefined?String(b.pass):String(data.emailSettings?.pass||'')};writeData(data);return send(res,200,{ok:true,configured:!!(data.emailSettings.host&&data.emailSettings.user&&data.emailSettings.pass&&data.emailSettings.to)});}catch(e){return send(res,400,{ok:false,error:'Could not save email settings.'});}}
-  if(req.method==='POST' && url.pathname==='/api/test-email'){if(!requireAuth(req,res)) return;try{const test={name:'MSC Email Test',phone:'-',email:'',source:'Admin Panel',message:'This is a test notification from the MSC website.'};const result=await sendEmail(test);if(!result.configured)return send(res,400,{ok:false,error:'Email is not configured. Add SMTP details first.'});return send(res,200,{ok:true,to:result.sentTo});}catch(e){return send(res,400,{ok:false,error:'Test email failed. Check SMTP settings and credentials.'});}}
+  if(req.method==='POST' && url.pathname==='/api/email-settings'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,configured:!!process.env.RESEND_API_KEY,provider:'resend',message:'Email is configured through Render environment variables.'});}
+  if(req.method==='POST' && url.pathname==='/api/test-email'){if(!requireAuth(req,res)) return;try{const test={name:'MSC Email Test',phone:'-',email:'',source:'Admin Panel',message:'This is a test notification from the MSC website.'};const result=await sendEmail(test);if(!result.configured)return send(res,400,{ok:false,error:'Resend is not configured. Add RESEND_API_KEY in Render Environment.'});return send(res,200,{ok:true,to:result.sentTo,provider:result.provider});}catch(e){console.error('Test email failed',e.message);return send(res,400,{ok:false,error:`Test email failed: ${e.message}`});}}
   if(req.method==='POST' && url.pathname==='/api/site-settings'){if(!requireAuth(req,res)) return;try{const b=await readJson(req,30000);data.siteSettings={...data.siteSettings,demoVideoUrl:String(b.demoVideoUrl||''),loaderDuration:Math.min(8000,Math.max(1500,Number(b.loaderDuration||4500)))};writeData(data);return send(res,200,{ok:true,siteSettings:data.siteSettings});}catch(e){return send(res,400,{ok:false,error:'Could not save site settings.'});}}
   if(req.method==='POST' && url.pathname==='/api/admin/settings'){ if(!requireAuth(req,res)) return; try{const b=await readJson(req,30000);if(b.loginId) data.admin.loginId=String(b.loginId).trim().slice(0,80);if(b.name) data.admin.name=String(b.name).trim().slice(0,80);if(b.newPassword){if(String(b.newPassword).length<8)return send(res,400,{ok:false,error:'Password must be at least 8 characters.'});const p=makePassword(String(b.newPassword));data.admin.salt=p.salt;data.admin.hash=p.hash;}writeData(data);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Could not save admin settings.'});}}
 
@@ -199,7 +203,7 @@ const server=http.createServer(async(req,res)=>{
   // Client enquiries / lead inbox
   if(req.method==='GET' && url.pathname==='/api/leads'){if(!requireAuth(req,res)) return;return send(res,200,{ok:true,leads:data.leads||[]});}
   if(req.method==='DELETE' && /^\/api\/leads\//.test(url.pathname)){if(!requireAuth(req,res)) return;const id=decodeURIComponent(url.pathname.split('/').pop());const before=(data.leads||[]).length;data.leads=(data.leads||[]).filter(x=>x.id!==id);if(data.leads.length===before)return send(res,404,{ok:false,error:'Client enquiry not found.'});writeData(data);return send(res,200,{ok:true});}
-  if(req.method==='POST' && url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const saved={id:crypto.randomUUID(),receivedAt:new Date().toISOString(),status:'New',source:String(lead.source||'Website'),name:String(lead.name||''),phone:String(lead.phone||''),email:String(lead.email||''),bhk:String(lead.bhk||''),property:String(lead.property||''),city:String(lead.city||''),area:String(lead.area||''),scope:String(lead.scope||''),finish:String(lead.finish||''),start:String(lead.start||''),estimate:String(lead.estimate||''),project:String(lead.project||''),message:String(lead.message||''),photoCount:Number(lead.photoCount||0),photoNames:Array.isArray(lead.photoNames)?lead.photoNames.slice(0,10).map(String):[]};data.leads=data.leads||[];data.leads.unshift(saved);data.leads=data.leads.slice(0,500);writeData(data);let notification={configured:false}, emailNotification={configured:false};try{notification=await sendWhatsApp(leadMessage(saved));}catch(e){console.error('WhatsApp notification failed',e.message);}try{emailNotification=await sendEmail(saved);}catch(e){console.error('Email notification failed',e.message);emailNotification={configured:true,sentTo:false};}return send(res,200,{ok:true,saved:true,notificationConfigured:notification.configured||false,emailConfigured:emailNotification.configured||false,emailSent:emailNotification.sentTo||false});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
+  if(req.method==='POST' && url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const saved={id:crypto.randomUUID(),receivedAt:new Date().toISOString(),status:'New',source:String(lead.source||'Website'),name:String(lead.name||''),phone:String(lead.phone||''),email:String(lead.email||''),bhk:String(lead.bhk||''),property:String(lead.property||''),city:String(lead.city||''),area:String(lead.area||''),scope:String(lead.scope||''),finish:String(lead.finish||''),start:String(lead.start||''),estimate:String(lead.estimate||''),project:String(lead.project||''),message:String(lead.message||''),photoCount:Number(lead.photoCount||0),photoNames:Array.isArray(lead.photoNames)?lead.photoNames.slice(0,10).map(String):[]};data.leads=data.leads||[];data.leads.unshift(saved);data.leads=data.leads.slice(0,500);writeData(data);let notification={configured:false}, emailNotification={configured:false};try{notification=await sendWhatsApp(leadMessage(saved));}catch(e){console.error('WhatsApp notification failed',e.message);}try{emailNotification=await sendEmail(saved);}catch(e){console.error('Email notification failed',e.message);emailNotification={configured:!!process.env.RESEND_API_KEY,sentTo:false,error:e.message};}return send(res,200,{ok:true,saved:true,notificationConfigured:notification.configured||false,emailConfigured:emailNotification.configured||false,emailSent:emailNotification.sentTo||false});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
 
   let filePath=path.join(ROOT,url.pathname==='/'?'index.html':url.pathname);
   if(!filePath.startsWith(ROOT))return send(res,403,{ok:false});
