@@ -65,6 +65,14 @@ const estimateAmount = document.getElementById('estimateAmount');
 const estimateSummary = document.getElementById('estimateSummary');
 const estimateResultCard = document.getElementById('estimateResultCard');
 const whatsappBtn = document.getElementById('estimateWhatsApp');
+const estimateNav = document.getElementById('estimateNav');
+const estimateNote = document.getElementById('estimateNote');
+const estimateThankyou = document.getElementById('estimateThankyou');
+const thankyouAmount = document.getElementById('thankyouAmount');
+const thankyouCopy = document.getElementById('thankyouCopy');
+const thankyouDetails = document.getElementById('thankyouDetails');
+const thankyouDetailsToggle = document.getElementById('thankyouDetailsToggle');
+const thankyouClose = document.getElementById('thankyouClose');
 const imageInput = document.getElementById('estimateImages');
 const previewGrid = document.getElementById('imagePreviewGrid');
 const selected = { bhk: '', scope: 'Full Home Interior', finish: 'Premium', city: '', area: '', property: 'Apartment', start: 'Ready to start', name: '', phone: '' };
@@ -82,6 +90,11 @@ function openEstimate() {
   updateWizard();
 }
 function closeEstimateModal() {
+  estimateThankyou?.classList.remove('show');
+  estimateThankyou?.setAttribute('aria-hidden', 'true');
+  estimateResultCard.style.display = '';
+  estimateNav.style.display = '';
+  estimateNote.style.display = '';
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
@@ -161,14 +174,10 @@ function validateStep(step) {
 
 function calculateEstimate() {
   const area = Number(selected.area || 0);
-  const rateMap = { Essential: 1600, Premium: 2200, Luxury: 3000 };
-  let rate = rateMap[selected.finish] || 2200;
-  let scopeFactor = selected.scope === 'Kitchen + Wardrobes' ? .55 : selected.scope === 'Living + Bedrooms' ? .68 : selected.scope === 'Commercial Interior' ? 1.1 : 1;
-  const base = area * rate * scopeFactor;
-  const low = Math.round(base * .9 / 50000) * 50000;
-  const high = Math.round(base * 1.12 / 50000) * 50000;
-  estimateAmount.textContent = `₹${(low/100000).toFixed(1)}L – ₹${(high/100000).toFixed(1)}L`;
-  estimateSummary.textContent = `${selected.bhk || selected.property} · ${Number(area).toLocaleString('en-IN')} sq.ft. · ${selected.finish} finish · ${selected.city || 'your city'}`;
+  const RATE_PER_SQFT = Number(window.MSC_RATE_PER_SQFT || 1000);
+  const base = area * RATE_PER_SQFT;
+  estimateAmount.textContent = `₹${Math.round(base).toLocaleString('en-IN')}`;
+  estimateSummary.textContent = `${selected.bhk || selected.property} · ${Number(area).toLocaleString('en-IN')} sq.ft. × ₹1,000/sq.ft. · ${selected.city || 'your city'}`;
   estimateResultCard.classList.add('ready');
 }
 
@@ -182,7 +191,7 @@ function updateWizard() {
   if (currentStep === 4 && selected.area) calculateEstimate();
 }
 
-nextBtn.addEventListener('click', () => {
+nextBtn.addEventListener('click', async () => {
   const error = validateStep(currentStep);
   if (error) {
     toast.textContent = error;
@@ -196,10 +205,62 @@ nextBtn.addEventListener('click', () => {
     return;
   }
   calculateEstimate();
-  whatsappBtn.classList.add('show');
-  toast.textContent = 'Your indicative estimate is ready.';
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  await showEstimateThankyou();
+});
+
+async function showEstimateThankyou() {
+  nextBtn.disabled = true;
+  nextBtn.innerHTML = 'Submitting…';
+  const sent = await submitLead('estimate');
+  thankyouAmount.textContent = estimateAmount.textContent;
+  thankyouCopy.textContent = sent
+    ? `Thank you, ${selected.name || 'there'}. We’ve received your requirements and our MSC team will contact you shortly.`
+    : `Thank you, ${selected.name || 'there'}. Your estimate is ready. We’ve saved your requirements and our team can follow up once the notification connection is active.`;
+  thankyouDetails.innerHTML = [
+    ['Name', selected.name || '—'],
+    ['Phone / WhatsApp', selected.phone || '—'],
+    ['City', selected.city || '—'],
+    ['Property', selected.property || '—'],
+    ['BHK', selected.bhk || '—'],
+    ['Area', selected.area ? `${Number(selected.area).toLocaleString('en-IN')} sq.ft.` : '—'],
+    ['Scope', selected.scope || '—'],
+    ['Finish', selected.finish || '—'],
+    ['Start', selected.start || '—']
+  ].map(([label, value]) => `<div><span>${label}</span><strong>${String(value).replace(/[<>]/g,'')}</strong></div>`).join('');
+  estimateNav.style.display = 'none';
+  estimateNote.style.display = 'none';
+  whatsappBtn.classList.remove('show');
+  document.querySelectorAll('.estimate-step').forEach(step => step.classList.remove('active'));
+  estimateResultCard.style.display = 'none';
+  estimateThankyou.classList.add('show');
+  estimateThankyou.setAttribute('aria-hidden', 'false');
+  nextBtn.disabled = false;
+  nextBtn.innerHTML = 'Get Estimate <span>↗</span>';
+}
+
+thankyouDetailsToggle.addEventListener('click', () => {
+  const expanded = thankyouDetailsToggle.getAttribute('aria-expanded') === 'true';
+  thankyouDetailsToggle.setAttribute('aria-expanded', String(!expanded));
+  thankyouDetails.hidden = expanded;
+  thankyouDetailsToggle.innerHTML = expanded ? 'View detailed summary <span>⌄</span>' : 'Hide detailed summary <span>⌃</span>';
+});
+
+thankyouClose.addEventListener('click', () => {
+  estimateThankyou.classList.remove('show');
+  estimateThankyou.setAttribute('aria-hidden', 'true');
+  estimateResultCard.style.display = '';
+  estimateNav.style.display = '';
+  estimateNote.style.display = '';
+  currentStep = 1;
+  selected.bhk = '';
+  uploadedFiles = [];
+  previewGrid.innerHTML = '';
+  document.querySelectorAll('.choice-card').forEach(card => card.classList.remove('selected'));
+  document.getElementById('estimateCity').value = '';
+  document.getElementById('estimateArea').value = '';
+  document.getElementById('estimateName').value = '';
+  document.getElementById('estimatePhone').value = '';
+  updateWizard();
 });
 
 backBtn.addEventListener('click', () => {
@@ -289,10 +350,104 @@ document.head.appendChild(revealStyle);
     if(projects && Array.isArray(projects)){
       const grid=document.querySelector('.project-grid');
       if(grid){
-        grid.innerHTML=projects.map(p=>`<article class="project-card ${p.id===projects[0]?.id?'tall':''}" data-category="${String(p.category).replace(/[^a-z]/gi,'')}"><img src="${p.image}" alt="${String(p.title).replace(/"/g,'&quot;')}" loading="lazy"><div class="project-info"><span>${p.category==='commercial'?'Commercial':'Residential'}</span><h3>${String(p.title).replace(/[<>]/g,'')}</h3><p>${String(p.location).replace(/[<>]/g,'')}</p></div></article>`).join('');
+        grid.innerHTML=projects.map(p=>{ const media=p.videoUrl ? `<div class=\"project-video-wrap\"><video src=\"${p.videoUrl}\" controls muted playsinline preload=\"metadata\"></video><span class=\"video-badge\">MSC FILM</span></div>` : `<img src=\"${p.image}\" alt=\"${String(p.title).replace(/\"/g,'&quot;')}\" loading=\"lazy\">`; return `<article class=\"project-card ${p.id===projects[0]?.id?'tall':''}\" data-category=\"${String(p.category).replace(/[^a-z]/gi,'')}\">${media}<div class=\"project-info\"><span>${p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential'}</span><h3>${String(p.title).replace(/[<>]/g,'')}</h3><p>${String(p.location).replace(/[<>]/g,'')}</p>${p.description?`<small>${String(p.description).replace(/[<>]/g,'')}</small>`:''}</div></article>`; }).join('');
         const newCards=grid.querySelectorAll('.project-card');
         document.querySelectorAll('.filter').forEach(filter=>filter.onclick=()=>{document.querySelectorAll('.filter').forEach(b=>b.classList.remove('active'));filter.classList.add('active');newCards.forEach(c=>c.style.display=filter.dataset.filter==='all'||c.dataset.filter===filter.dataset.filter?'':'none');});
       }
     }
   } catch(e){ console.warn('MSC owner changes could not be applied',e); }
+})();
+
+
+// Live MSC CMS: content, projects and laminate finishes are loaded from the server so every visitor sees admin changes.
+(async function loadMSCLiveCMS(){
+  const esc = (v='') => String(v).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const setText=(sel,val)=>{const el=document.querySelector(sel); if(el && val!=null) el.textContent=val;};
+  const setHTML=(sel,val)=>{const el=document.querySelector(sel); if(el && val!=null) el.innerHTML=val;};
+  const setHref=(sel,href)=>{const el=document.querySelector(sel); if(el && href) el.href=href;};
+  try{
+    const [contentRes, projectRes, laminateRes] = await Promise.all([
+      fetch('/api/content',{cache:'no-store'}), fetch('/api/projects',{cache:'no-store'}), fetch('/api/laminates',{cache:'no-store'})
+    ]);
+    const contentData=await contentRes.json(); const projectData=await projectRes.json(); const laminateData=await laminateRes.json();
+    const c=contentData.content||{};
+    window.MSC_RATE_PER_SQFT=Number(c.estimate?.rate||1000);
+
+    // Header / navigation
+    const brandImg=document.querySelector('.brand img'); if(brandImg) brandImg.alt=(c.brandName||'MSC')+' '+(c.brandSubtitle||'');
+    setText('.brand-text strong',c.brandName); setText('.brand-text small',c.brandSubtitle);
+    const navVals=[c.nav?.services,c.nav?.projects,c.nav?.about,c.nav?.process,c.nav?.contact];
+    document.querySelectorAll('.desktop-nav a').forEach((a,i)=>{if(navVals[i]) a.textContent=navVals[i];});
+    setText('.header-quote',c.nav?.estimate+' ↗'); setText('.header-cta',c.nav?.consultation+' ↗');
+
+    // Hero
+    setText('.hero .eyebrow',c.hero?.eyebrow); setText('.hero .hero-copy',c.hero?.copy); setText('.hero .btn-gold',c.hero?.primary+' ↗'); setText('.hero .text-link',c.hero?.secondary+' ↓');
+    const heroHeading=document.querySelector('.hero h1'); if(heroHeading && c.hero?.heading){ const words=String(c.hero.heading).trim().split(/\s+/); const last=esc(words.pop()||''); heroHeading.innerHTML=esc(words.join(' '))+(words.length?' ':'')+'<br><em>'+last+'</em>'; }
+
+    // About
+    setText('#about .section-label',c.about?.label); setText('#about .eyebrow',c.about?.kicker); setText('#about .intro-copy p:nth-of-type(1)',c.about?.p1); setText('#about .intro-copy p:nth-of-type(2)',c.about?.p2); setText('#about .intro-copy .text-link',c.about?.cta+' ↗');
+    const aboutHeading=document.querySelector('#about h2'); if(aboutHeading&&c.about?.heading){const words=String(c.about.heading).split(/\s+/);const last=esc(words.pop()||'');aboutHeading.innerHTML=esc(words.join(' '))+' <br> '+last;}
+
+    // Services
+    setText('#services .section-label',c.services?.label); setText('#services .section-head h2',c.services?.heading); setText('#services .section-head > p',c.services?.intro);
+    const serviceGrid=document.querySelector('#services .service-grid');
+    if(serviceGrid && Array.isArray(c.services?.items)){
+      serviceGrid.innerHTML=c.services.items.map((it,i)=>`<article class="service-card ${i===0?'featured':''}"><div class="service-number">${esc(it.number||String(i+1).padStart(2,'0'))}</div><h3>${esc(it.title||'Service')}</h3><p>${esc(it.description||'')}</p><a href="#contact">Explore service <span>↗</span></a></article>`).join('');
+    }
+
+    // Statement / Projects / Why / Process
+    setText('.statement p',c.statement?.quote); setText('.statement small',c.statement?.small); setText('#projects .section-label',c.projects?.label);
+    const ph=document.querySelector('#projects .section-head h2'); if(ph&&c.projects?.heading){const words=String(c.projects.heading).split(/\s+/);const last=esc(words.pop()||'');ph.innerHTML=esc(words.join(' '))+'<br><em>'+last+'</em>';}
+    setText('.why .section-label',c.why?.label); const wh=document.querySelector('.why h2'); if(wh&&c.why?.heading){const words=String(c.why.heading).split(/\s+/); const last=esc(words.pop()||''); wh.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>';}
+    setText('.why .lead',c.why?.lead);
+    const featureList=document.querySelector('.feature-list'); if(featureList&&Array.isArray(c.why?.features)) featureList.innerHTML=c.why.features.map((f,i)=>`<div><span>${esc(f.number||String(i+1).padStart(2,'0'))}</span><strong>${esc(f.title||'')}</strong><p>${esc(f.description||'')}</p></div>`).join('');
+    setText('#process .section-label',c.process?.label); const procH=document.querySelector('#process .section-head h2'); if(procH&&c.process?.heading){const words=String(c.process.heading).split(/\s+/);const last=esc(words.pop()||'');procH.innerHTML=esc(words.join(' '))+'<br><em>'+last+'</em>';} setText('#process .section-head > p',c.process?.intro);
+    const processGrid=document.querySelector('.process-grid'); if(processGrid&&Array.isArray(c.process?.steps)) processGrid.innerHTML=c.process.steps.map((st,i)=>`<div class="process-step"><span>${esc(st.number||String(i+1).padStart(2,'0'))}</span><h3>${esc(st.title||'')}</h3><p>${esc(st.description||'')}</p></div>`).join('');
+
+    // Estimate / contact / footer
+    setText('#estimate .section-label',c.estimate?.label); const eh=document.querySelector('#estimate .estimate-teaser h2'); if(eh&&c.estimate?.heading){const words=String(c.estimate.heading).split(/\s+/);const last=esc(words.pop()||'');eh.innerHTML=esc(words.join(' '))+'<br><em>'+last+'</em>';} setText('#estimate .estimate-teaser p',c.estimate?.copy);
+    const high=document.querySelector('.estimate-highlights'); if(high&&Array.isArray(c.estimate?.highlights)) high.innerHTML=c.estimate.highlights.map((h,i)=>`<div><strong>${String(i+1).padStart(2,'0')}</strong><span>${esc(h)}</span></div>`).join('');
+    setText('#estimateNote',`Estimate basis: ₹${Number(c.estimate?.rate||1000).toLocaleString('en-IN')} per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.`);
+    setText('#contact .section-label',c.contact?.label); const ch=document.querySelector('#contact h2'); if(ch&&c.contact?.heading){const words=String(c.contact.heading).split(/\s+/);const last=esc(words.pop()||'');ch.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>'; } setText('#contact .consultation-inner > div > p',c.contact?.copy);
+    setText('.footer-brand p',c.footer?.tagline); setText('.footer-bottom span:last-child',c.footer?.closing);
+
+    // Projects
+    const grid=document.querySelector('.project-grid'); const projects=projectData.projects||[];
+    if(grid){grid.innerHTML=projects.map((p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`;return `<article class="project-card ${i===0?'tall':''}" data-category="${esc(p.category||'residential')}">${media}<div class="project-info"><span>${esc(p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;}).join('');}
+    const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.filter===filter.dataset.filter?'':'none');});
+
+    // Laminates
+    setText('#laminateLabel',c.laminate?.label); const lh=document.querySelector('#laminateHeading'); if(lh&&c.laminate?.heading){const words=String(c.laminate.heading).split(/\s+/);const last=esc(words.pop()||'');lh.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>';}
+    setText('#laminateIntro',c.laminate?.intro);
+    const lgrid=document.getElementById('laminateGridPublic'), lempty=document.getElementById('laminateEmpty'); const laminates=laminateData.laminates||[];
+    if(lgrid) lgrid.innerHTML=laminates.map(x=>`<figure class="laminate-public-card"><img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy"><figcaption>${esc(x.name)}</figcaption></figure>`).join(''); if(lempty) lempty.style.display=laminates.length?'none':'block';
+
+    // Update estimate rate after CMS settings are loaded.
+    const note=document.getElementById('estimateNote'); if(note) note.textContent=`Estimate basis: ₹${Number(c.estimate?.rate||1000).toLocaleString('en-IN')} per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.`;
+
+    // Reveal newly rendered content.
+    document.querySelectorAll('.service-card,.project-card,.process-step,.feature-list > div,.estimate-highlights div,.laminate-public-card').forEach(el=>{el.style.opacity='1';el.style.transform='none';});
+  }catch(e){ console.warn('MSC live CMS could not load; using the baked-in website content.',e); }
+})();
+
+
+/* MSC AI concierge */
+(function(){
+  const launch=document.getElementById('mscAiLaunch'), panel=document.getElementById('mscAiPanel'), close=document.getElementById('mscAiClose');
+  const form=document.getElementById('mscAiForm'), input=document.getElementById('mscAiInput'), messages=document.getElementById('mscAiMessages');
+  if(!launch||!panel||!form)return;
+  function toggle(open){panel.classList.toggle('open',open);panel.setAttribute('aria-hidden',String(!open));if(open)setTimeout(()=>input?.focus(),80);}
+  launch.addEventListener('click',()=>toggle(!panel.classList.contains('open'))); close?.addEventListener('click',()=>toggle(false));
+  function add(text,who){const el=document.createElement('div');el.className='msc-ai-msg '+who;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el;}
+  async function ask(text){
+    add(text,'user'); const thinking=add('Thinking…','ai'); input.disabled=true;
+    try{
+      const r=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});
+      const data=await r.json(); if(!r.ok) throw new Error(data.error||'Assistant unavailable');
+      thinking.textContent=data.reply||'Please contact our studio for assistance.';
+    }catch(e){thinking.textContent=e?.message||'I’m unable to connect right now. Please use the consultation form and our team will get back to you.';console.warn(e);}
+    input.disabled=false;input.focus();messages.scrollTop=messages.scrollHeight;
+  }
+  form.addEventListener('submit',e=>{e.preventDefault();const v=input.value.trim();if(v){input.value='';ask(v);}});
+  document.querySelectorAll('.msc-ai-suggestions button').forEach(b=>b.addEventListener('click',()=>ask(b.textContent)));
 })();

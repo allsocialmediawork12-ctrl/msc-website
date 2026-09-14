@@ -15,8 +15,8 @@
 
   <header class="site-header" id="siteHeader">
     <a class="brand" href="#home" aria-label="MSC home">
-      <img src="assets/msc-logo.jpg" alt="MSC Mansion Space Creative Studio logo" />
-      <span class="brand-text"><strong>MSC</strong><small>Mansion Space Creative</small></span>
+      <img src="assets/msc-logo-light.png" alt="MSC Mansion Space Creative Studio logo" />
+      <span class="brand-text"><strong>MSC</strong><small>Mansion Space Creative Studio</small></span>
     </a>
 
     <nav class="desktop-nav" aria-label="Primary navigation">
@@ -174,6 +174,18 @@
       </div>
     </section>
 
+    <section class="laminate-section section-pad" id="laminates">
+      <div class="section-head laminate-head">
+        <div>
+          <div class="section-label" id="laminateLabel">MATERIAL LIBRARY</div>
+          <h2 id="laminateHeading">Laminate <em>Finishes.</em></h2>
+        </div>
+        <p id="laminateIntro">Browse our current laminate finish collection by name.</p>
+      </div>
+      <div class="laminate-grid-public" id="laminateGridPublic"></div>
+      <p class="laminate-empty" id="laminateEmpty">Our finish library is being curated. Please check back soon.</p>
+    </section>
+
     <section class="estimate-section section-pad" id="estimate">
       <div class="estimate-teaser">
         <div>
@@ -195,7 +207,7 @@
       <div class="estimate-modal-panel">
         <button class="estimate-close" id="estimateClose" type="button" aria-label="Close estimate quotation">×</button>
         <div class="estimate-brand-row">
-          <img src="assets/msc-logo.jpg" alt="MSC logo">
+          <img src="assets/msc-logo-light.png" alt="MSC logo">
           <div><strong>MSC</strong><small>Mansion Space Creative Studio</small></div>
           <span class="step-count" id="stepCount">1 / 4</span>
         </div>
@@ -233,9 +245,9 @@
           <div class="wizard-field">
             <label for="finishSelect">Finish level</label>
             <select id="finishSelect">
-              <option value="Essential" data-rate="1600">Essential · ₹1,600/sq.ft.</option>
-              <option value="Premium" data-rate="2200" selected>Premium · ₹2,200/sq.ft.</option>
-              <option value="Luxury" data-rate="3000">Luxury · ₹3,000/sq.ft.</option>
+              <option value="Essential" data-rate="1000">Essential · ₹1,000/sq.ft.</option>
+              <option value="Premium" data-rate="1000" selected>Premium · ₹1,000/sq.ft.</option>
+              <option value="Luxury" data-rate="1000">Luxury · ₹1,000/sq.ft.</option>
             </select>
           </div>
         </div>
@@ -274,12 +286,29 @@
           <small id="estimateSummary">Complete the steps to calculate your estimate.</small>
         </div>
 
-        <div class="estimate-nav">
+        <div class="estimate-nav" id="estimateNav">
           <button class="wizard-back" id="estimateBack" type="button">Back</button>
           <button class="btn btn-gold wizard-next" id="estimateNext" type="button">Next <span>→</span></button>
         </div>
-        <button class="estimate-whatsapp-final" id="estimateWhatsApp" type="button">Send estimate request on WhatsApp <span>↗</span></button>
-        <p class="wizard-note">This is an indicative planning range, not a final quotation. Final pricing depends on site measurement, design, materials and execution scope.</p>
+        <button class="estimate-whatsapp-final" id="estimateWhatsApp" type="button">Send estimate request <span>↗</span></button>
+        <p class="wizard-note" id="estimateNote">Estimate basis: ₹1,000 per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.</p>
+
+        <section class="estimate-thankyou" id="estimateThankyou" aria-live="polite" aria-hidden="true">
+          <div class="thankyou-confetti" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>•</span><span>✧</span><span>•</span></div>
+          <div class="thankyou-icon" aria-hidden="true">✦</div>
+          <p class="thankyou-kicker">REQUEST RECEIVED</p>
+          <h3>Thank you for<br><em>choosing MSC.</em></h3>
+          <p class="thankyou-copy" id="thankyouCopy">We’ve received your requirements. Our team will review them and get in touch shortly.</p>
+          <div class="thankyou-budget">
+            <span>YOUR ESTIMATED BUDGET RANGE</span>
+            <strong id="thankyouAmount">₹ —</strong>
+            <small>This is an indicative range and can be customised to suit your requirements.</small>
+          </div>
+          <button class="thankyou-details-toggle" id="thankyouDetailsToggle" type="button" aria-expanded="false">View detailed summary <span>⌄</span></button>
+          <div class="thankyou-details" id="thankyouDetails" hidden></div>
+          <a class="btn btn-gold thankyou-home" href="/">Go to home page <span>↗</span></a>
+          <button class="thankyou-close" id="thankyouClose" type="button">Start another estimate</button>
+        </section>
       </div>
     </div>
 
@@ -305,7 +334,7 @@
 
   <footer class="site-footer">
     <div class="footer-top">
-      <div class="footer-brand"><img src="assets/msc-logo.jpg" alt="MSC logo"><p>MAISON • SPACE • CREATIVE</p></div>
+      <div class="footer-brand"><img src="assets/msc-logo-light.png" alt="MSC logo"><p>MAISON • SPACE • CREATIVE</p></div>
       <div class="footer-nav"><a href="#services">Services</a><a href="#projects">Projects</a><a href="#about">About</a><a href="#contact">Contact</a></div>
       <div class="footer-contact"><span>Start a conversation</span><a href="#contact">Book a consultation ↗</a>
         <div class="social-links" aria-label="MSC social media">
@@ -318,6 +347,21 @@
     </div>
     <div class="footer-bottom"><span>© <span id="year"></span> MSC Mansion Space Creative Studio</span><span>Designed for spaces with soul.</span></div>
   </footer>
+
+
+  <!-- MSC AI Chat Assistant -->
+  <div class="msc-ai" id="mscAi">
+    <button class="msc-ai-launch" id="mscAiLaunch" type="button" aria-label="Open MSC AI assistant">
+      <span class="msc-ai-spark">✦</span><span>Ask MSC AI</span>
+    </button>
+    <section class="msc-ai-panel" id="mscAiPanel" aria-label="MSC AI chat" aria-hidden="true">
+      <div class="msc-ai-head"><div><strong>MSC AI Concierge</strong><small>Interior design assistant</small></div><button id="mscAiClose" type="button" aria-label="Close">×</button></div>
+      <div class="msc-ai-messages" id="mscAiMessages"><div class="msc-ai-msg ai">Hello. I’m MSC’s AI design concierge. Ask me about our interiors, services, process, estimates, or booking a consultation.</div></div>
+      <div class="msc-ai-suggestions"><button type="button">What services do you offer?</button><button type="button">How does the estimate work?</button><button type="button">Book a consultation</button></div>
+      <form class="msc-ai-form" id="mscAiForm"><input id="mscAiInput" name="message" autocomplete="off" placeholder="Ask about your project..." required><button type="submit" aria-label="Send">↗</button></form>
+      <small class="msc-ai-note">AI assistant • For project-specific pricing, our team will confirm after consultation.</small>
+    </section>
+  </div>
 
   <div class="toast" id="toast">Thank you — your consultation request is ready to be connected.</div>
   <button class="back-top" id="backTop" aria-label="Back to top">↑</button>

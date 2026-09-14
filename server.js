@@ -1,121 +1,106 @@
-/*
-  MSC private lead-notification server
-  -----------------------------------
-  Serves the static MSC site and accepts POST /api/lead.
-
-  Required environment variables for automatic owner WhatsApp alerts:
-    PORT=3000
-    TWILIO_ACCOUNT_SID=...
-    TWILIO_AUTH_TOKEN=...
-    TWILIO_WHATSAPP_FROM=whatsapp:+14155238886   (or your approved WhatsApp sender)
-    OWNER_WHATSAPP_TO=whatsapp:+91XXXXXXXXXX
-
-  IMPORTANT: keep this file on the server. Never put the Twilio credentials or
-  OWNER_WHATSAPP_TO in public JavaScript.
-*/
-
+/* MSC Mansion Space Creative Studio — live CMS + lead notification server */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { URL } = require('url');
-
+const nodemailer = require('nodemailer');
+require('dotenv').config();
 const PORT = Number(process.env.PORT || 3000);
 const ROOT = __dirname;
-const MIME = {
-  '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
-  '.css':'text/css; charset=utf-8', '.jpg':'image/jpeg', '.jpeg':'image/jpeg',
-  '.png':'image/png', '.webp':'image/webp', '.svg':'image/svg+xml', '.txt':'text/plain; charset=utf-8'
+const DATA_DIR = path.join(ROOT, 'data');
+const UPLOADS_DIR = path.join(ROOT, 'uploads');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, {recursive:true});
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, {recursive:true});
+const DATA_FILE = path.join(DATA_DIR, 'site.json');
+function getOpenAIKey(){
+  let key=String(process.env.OPENAI_API_KEY||'').trim();
+  if((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) key=key.slice(1,-1).trim();
+  if(/^Bearer\s+/i.test(key)) key=key.replace(/^Bearer\s+/i,'').trim();
+  return key;
+}
+function getOpenAIModel(){ return String(process.env.OPENAI_MODEL||'gpt-5.6-luna').trim() || 'gpt-5.6-luna'; }
+const ADMIN_PASSWORD_MIGRATION_VERSION = 2;
+const FORCED_ADMIN_PASSWORD = 'MSC@Admin2026!';
+const MIME = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm','.mov':'video/quicktime','.txt':'text/plain; charset=utf-8','.json':'application/json; charset=utf-8'};
+const DEFAULT_CONTENT = {
+ brandName:'MSC',brandSubtitle:'Mansion Space Creative Studio',nav:{services:'Services',projects:'Projects',about:'About',process:'Process',contact:'Contact',estimate:'Get Estimate Quotation',consultation:'Book a Consultation'},
+ hero:{eyebrow:'MAISON • SPACE • CREATIVE',heading:'Spaces that feel like you.',copy:'Thoughtful interiors, refined materials and timeless details — designed around the way you live.',primary:'Get Estimate Quotation',secondary:'Explore our work'},
+ about:{label:'01 — THE STUDIO',kicker:'MANSION SPACE CREATIVE',heading:'We design the feeling behind the space.',p1:'MSC Mansion Space Creative Studio is an interior design studio creating sophisticated homes, workplaces and hospitality spaces with a strong sense of identity.',p2:'From the first sketch to the final styling, we bring together architecture, materials, lighting and furniture to make every corner intentional.',cta:'Talk to our designers'},
+ services:{label:'02 — WHAT WE DO',heading:'One studio. Every detail.',intro:'From a single room to a complete turnkey project, our services are built to make the design journey simple and beautifully considered.',items:[{number:'01',title:'Full Home Interiors',description:'Complete design direction for living rooms, bedrooms, kitchens, wardrobes and every connecting space.'},{number:'02',title:'Modular Kitchens',description:'Elegant, practical kitchens planned around your cooking style, storage needs and aesthetic.'},{number:'03',title:'Custom Wardrobes',description:'Made-to-measure wardrobes, storage and TV units with precise proportions and premium finishes.'},{number:'04',title:'False Ceiling & Lighting',description:'Layered ceilings, profile lights and feature lighting designed to make every room feel finished.'},{number:'05',title:'Complete Renovation',description:'Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling.'},{number:'06',title:'Commercial Interiors',description:'Workspaces, studios and commercial environments designed for brand presence, comfort and performance.'}]},
+ statement:{quote:'Good design is not about filling a room. It is about knowing what to leave out.',small:'THE MSC APPROACH'},projects:{label:'03 — SELECTED WORK',heading:'Designed with intention.'},why:{label:'04 — WHY MSC',heading:'A studio approach with a clear point of view.',lead:'We combine creative thinking with practical execution so the final space feels considered, not complicated.',features:[{number:'01',title:'Personal direction',description:'Every project starts with your lifestyle, taste and aspirations.'},{number:'02',title:'Material intelligence',description:'Textures, grains, stone, metal and light are selected as one composition.'},{number:'03',title:'End-to-end execution',description:'A considered process from concept and drawings through installation and styling.'}]},
+ process:{label:'05 — HOW IT WORKS',heading:'A clear path to your new space.',intro:'Our process keeps the creative experience exciting while every practical detail stays organised.',steps:[{number:'01',title:'Discover',description:'We understand your lifestyle, requirements, budget and design direction.'},{number:'02',title:'Design',description:'Concepts, layouts, materials, colours and 3D visualisations bring the idea to life.'},{number:'03',title:'Refine',description:'We finalise details, specifications and a clear project scope together.'},{number:'04',title:'Create',description:'Our execution team turns the approved design into a finished space.'}]},
+ estimate:{label:'06 — ESTIMATE QUOTATION',heading:'Get your interior estimate in 4 steps.',copy:'Tell us about your home, choose your scope, add your approximate area and upload room or floor-plan photos. MSC will generate an indicative starting estimate.',rate:1000,highlights:['Select BHK / property','Choose your interiors','Add area & location','Upload photos & get estimate']},
+ contact:{label:'07 — LET\'S CREATE',heading:'Have a space in mind?',copy:'Tell us a little about your project. Our studio will get back to you to discuss the next step.'},laminate:{label:'MATERIAL LIBRARY',heading:'Laminate Finishes',intro:'Browse our current laminate finish collection by name. Tap a finish to view it full size.'},footer:{tagline:'MAISON • SPACE • CREATIVE',closing:'Designed for spaces with soul.'}
 };
-
-function send(res, status, body, type='application/json') {
-  res.writeHead(status, {'Content-Type': type, 'Cache-Control':'no-store'});
-  res.end(type.includes('json') ? JSON.stringify(body) : body);
-}
-
-function readJson(req) {
-  return new Promise((resolve, reject) => {
-    let data='';
-    req.on('data', chunk => {
-      data += chunk;
-      if (data.length > 100000) { reject(new Error('Payload too large')); req.destroy(); }
-    });
-    req.on('end', () => { try { resolve(JSON.parse(data || '{}')); } catch(e) { reject(e); } });
-    req.on('error', reject);
-  });
-}
-
-async function sendWhatsApp(body) {
-  const sid=process.env.TWILIO_ACCOUNT_SID;
-  const token=process.env.TWILIO_AUTH_TOKEN;
-  const from=process.env.TWILIO_WHATSAPP_FROM;
-  const to=process.env.OWNER_WHATSAPP_TO;
-  if (!sid || !token || !from || !to) return {configured:false};
-
-  const params = new URLSearchParams({
-    From: from,
-    To: to,
-    Body: body
-  });
-  const auth = Buffer.from(`${sid}:${token}`).toString('base64');
-  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method:'POST',
-    headers:{'Authorization':`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},
-    body:params
-  });
-  if (!response.ok) {
-    const detail=await response.text();
-    throw new Error(`WhatsApp notification failed: ${detail}`);
-  }
-  return {configured:true};
-}
-
-function leadMessage(lead) {
-  return [
-    '🔔 New MSC website enquiry',
-    `Source: ${lead.source || 'Website'}`,
-    `Name: ${lead.name || '-'}`,
-    `Phone: ${lead.phone || '-'}`,
-    lead.email ? `Email: ${lead.email}` : null,
-    lead.bhk ? `BHK: ${lead.bhk}` : null,
-    lead.property ? `Property: ${lead.property}` : null,
-    lead.city ? `City: ${lead.city}` : null,
-    lead.area ? `Area: ${lead.area} sq.ft.` : null,
-    lead.scope ? `Scope: ${lead.scope}` : null,
-    lead.finish ? `Finish: ${lead.finish}` : null,
-    lead.start ? `Start: ${lead.start}` : null,
-    lead.estimate ? `Indicative estimate: ${lead.estimate}` : null,
-    lead.project ? `Project type: ${lead.project}` : null,
-    lead.message ? `Message: ${lead.message}` : null,
-    lead.photoCount != null ? `Photos uploaded: ${lead.photoCount}` : null,
-    lead.photoNames?.length ? `Photo files: ${lead.photoNames.join(', ')}` : null,
-    `Received: ${new Date().toLocaleString('en-IN')}`
-  ].filter(Boolean).join('\n');
-}
-
-const server=http.createServer(async (req,res)=>{
-  const url=new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if(req.method==='POST' && url.pathname==='/api/lead'){
-    try{
-      const lead=await readJson(req);
-      if(!lead.name || !lead.phone){ return send(res,400,{ok:false,error:'Name and phone are required.'}); }
-      const result=await sendWhatsApp(leadMessage(lead));
-      if(!result.configured) return send(res,503,{ok:false,error:'WhatsApp notification is not configured on the server yet.'});
-      return send(res,200,{ok:true});
-    }catch(err){
-      console.error(err);
-      return send(res,500,{ok:false,error:'Could not process the enquiry.'});
-    }
-  }
-
-  let filePath=path.join(ROOT, url.pathname==='/'?'index.html':url.pathname);
-  if(!filePath.startsWith(ROOT)) return send(res,403,{ok:false});
+const SAMPLE_PROJECTS=[{id:'sample1',title:'The Walnut Residence',location:'Bengaluru · 3 BHK',category:'residential',description:'Warm, layered interiors with rich timber and refined lighting.',image:'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85',videoUrl:''},{id:'sample2',title:'Ivory House',location:'Hyderabad · Villa',category:'residential',description:'Soft neutral architecture with timeless material contrast.',image:'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=85',videoUrl:''},{id:'sample3',title:'Studio 27',location:'Hyderabad · Workspace',category:'commercial',description:'A polished work environment balancing function with character.',image:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85',videoUrl:''},{id:'sample4',title:'Monument Kitchen',location:'Hyderabad · Custom Kitchen',category:'residential',description:'Contemporary cabinetry, considered storage and premium finishes.',image:'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1800&q=85',videoUrl:''}];
+function hashPassword(password,salt){return crypto.scryptSync(password,salt,64).toString('hex');}
+function makePassword(password){const salt=crypto.randomBytes(16).toString('hex');return{salt,hash:hashPassword(password,salt)};}
+function verifyPassword(password,record){try{const a=Buffer.from(hashPassword(password,record.salt),'hex'),b=Buffer.from(record.hash,'hex');return a.length===b.length&&crypto.timingSafeEqual(a,b);}catch{return false;}}
+function defaultData(){const p=makePassword(process.env.ADMIN_PASSWORD||'MSC-ADMIN-2026');return{version:6,admin:{name:process.env.ADMIN_NAME||'MSC Admin',loginId:process.env.ADMIN_LOGIN_ID||'MSCADMIN',...p},content:DEFAULT_CONTENT,projects:SAMPLE_PROJECTS,laminates:[],socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''},leads:[]};}
+function readData(){try{if(!fs.existsSync(DATA_FILE)){const d=defaultData();fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2));return d;}return JSON.parse(fs.readFileSync(DATA_FILE,'utf8'));}catch(e){console.error('Data read failed',e);return defaultData();}}
+function writeData(d){fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2),'utf8');}
+function migrateAdminPassword(data){if(!data.admin)data.admin={};if(data.admin.passwordResetVersion===ADMIN_PASSWORD_MIGRATION_VERSION)return false;const p=makePassword(FORCED_ADMIN_PASSWORD);data.admin.salt=p.salt;data.admin.hash=p.hash;data.admin.loginId=process.env.ADMIN_LOGIN_ID||'MSCADMIN';data.admin.passwordResetVersion=ADMIN_PASSWORD_MIGRATION_VERSION;writeData(data);return true;}
+let data=readData();migrateAdminPassword(data);if(!data.admin.loginId){data.admin.loginId=process.env.ADMIN_LOGIN_ID||'MSCADMIN';writeData(data);}
+function mergeDefaults(target,defaults){if(!target||typeof target!=='object')return JSON.parse(JSON.stringify(defaults));const out=Array.isArray(defaults)?[]:{};for(const k of Object.keys(defaults))out[k]=mergeDefaults(target[k],defaults[k]);for(const k of Object.keys(target))if(!(k in out))out[k]=target[k];return out;}
+data.content=mergeDefaults(data.content,DEFAULT_CONTENT);data.projects=Array.isArray(data.projects)?data.projects:SAMPLE_PROJECTS;data.laminates=Array.isArray(data.laminates)?data.laminates:[];data.socials=data.socials||{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:''};data.leads=Array.isArray(data.leads)?data.leads:[];writeData(data);
+const sessions=new Map();
+function sessionCookie(req){const c=req.headers.cookie||'';const m=c.match(/(?:^|;\s*)msc_admin_session=([^;]+)/);return m?decodeURIComponent(m[1]):'';}
+function isAuthed(req){const token=sessionCookie(req);return!!token&&sessions.has(token);}
+function requireAuth(req,res){if(isAuthed(req))return true;send(res,401,{ok:false,error:'Admin authentication required.'});return false;}
+function setSession(res){const token=crypto.randomBytes(32).toString('hex');sessions.set(token,Date.now());const secure=process.env.NODE_ENV==='production'?'; Secure':'';res.setHeader('Set-Cookie',`msc_admin_session=${encodeURIComponent(token)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);}
+function clearSession(req,res){const token=sessionCookie(req);if(token)sessions.delete(token);res.setHeader('Set-Cookie','msc_admin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');}
+function send(res,status,body,type='application/json'){res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store'});res.end(type.includes('json')?JSON.stringify(body):body);}
+function readJson(req,maxBytes=150000){return new Promise((resolve,reject)=>{let data='';req.on('data',c=>{data+=c;if(data.length>maxBytes){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>{try{resolve(JSON.parse(data||'{}'));}catch(e){reject(e);}});req.on('error',reject);});}
+function safeFileName(name){const ext=path.extname(name||'').toLowerCase();const base=path.basename(name||'media',ext).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,60)||'media';return`${Date.now()}-${Math.random().toString(36).slice(2,9)}-${base}${ext}`;}
+function isAllowedMedia(name,mime){const ext=path.extname(name||'').toLowerCase();return['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext)&&/^(video|image)\//.test(mime||'');}
+async function sendEmail(lead){const host=process.env.SMTP_HOST,port=Number(process.env.SMTP_PORT||465),user=process.env.SMTP_USER,pass=process.env.SMTP_PASS,to=process.env.MAIL_TO||'mscinterior1@gmail.com';if(!host||!user||!pass||!to)return{configured:false};const transporter=nodemailer.createTransport({host,port,secure:String(process.env.SMTP_SECURE||'true')==='true',auth:{user,pass}});const subject=`New MSC Client Enquiry — ${lead.name||'Website'}`;const text=leadMessage(lead);await transporter.sendMail({from:process.env.MAIL_FROM||user,to,replyTo:lead.email||undefined,subject,text});return{configured:true,sentTo:to};}
+async function sendWhatsApp(body){const sid=process.env.TWILIO_ACCOUNT_SID,token=process.env.TWILIO_AUTH_TOKEN,from=process.env.TWILIO_WHATSAPP_FROM;const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];const recipients=(process.env.OWNER_WHATSAPP_TO||defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);if(!sid||!token||!from||!recipients.length)return{configured:false};const auth=Buffer.from(`${sid}:${token}`).toString('base64');const results=await Promise.all(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok)throw new Error(await r.text());return true;}));return{configured:true,sentTo:results.length};}
+function leadMessage(lead){return['🔔 New MSC website enquiry',`Source: ${lead.source||'Website'}`,`Name: ${lead.name||'-'}`,`Phone: ${lead.phone||'-'}`,lead.email?`Email: ${lead.email}`:null,lead.bhk?`BHK: ${lead.bhk}`:null,lead.property?`Property: ${lead.property}`:null,lead.city?`City: ${lead.city}`:null,lead.area?`Area: ${lead.area} sq.ft.`:null,lead.scope?`Scope: ${lead.scope}`:null,lead.finish?`Finish: ${lead.finish}`:null,lead.start?`Start: ${lead.start}`:null,lead.estimate?`Estimate: ${lead.estimate}`:null,lead.project?`Project type: ${lead.project}`:null,lead.message?`Message: ${lead.message}`:null,lead.photoCount!=null?`Photos uploaded: ${lead.photoCount}`:null,`Received: ${new Date().toLocaleString('en-IN')}`].filter(Boolean).join('\n');}
+function parseOpenAIError(raw){try{const j=JSON.parse(raw);return{message:String(j?.error?.message||''),code:String(j?.error?.code||''),type:String(j?.error?.type||'')}}catch{return{message:'',code:'',type:''}}}
+function aiErrorResponse(status,raw){const e=parseOpenAIError(raw);if(status===401)return{status:502,body:{ok:false,error:e.message||'OpenAI rejected the API credential. Check that OPENAI_API_KEY is current and valid.',errorType:'invalid_api_key'}};if(status===403)return{status:502,body:{ok:false,error:e.message||'The OpenAI project or API credential does not have permission to use the selected model/API.',errorType:'api_access_denied'}};if(status===429)return{status:429,body:{ok:false,error:e.message||'OpenAI rate limit or quota was reached. Check your project limits and billing.',errorType:'rate_limit_or_quota'}};if(status===400)return{status:400,body:{ok:false,error:e.message||'OpenAI rejected the request. Check the selected model and request parameters.',errorType:'bad_request'}};return{status:502,body:{ok:false,error:e.message||'The AI assistant could not respond right now.',errorType:'api_error'}};}
+const server=http.createServer(async(req,res)=>{
+ const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
+ if(req.method==='POST'&&url.pathname==='/api/admin/login'){try{const b=await readJson(req,20000);if(String(b.loginId||'').trim().toLowerCase()!==String(data.admin.loginId||'MSCADMIN').trim().toLowerCase()||!verifyPassword(String(b.password||''),data.admin))return send(res,401,{ok:false,error:'Incorrect password.'});setSession(res);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Invalid login request.'});}}
+ if(req.method==='POST'&&url.pathname==='/api/admin/logout'){clearSession(req,res);return send(res,200,{ok:true});}
+ if(req.method==='GET'&&url.pathname==='/api/ai-health'){
+  const key=getOpenAIKey(),model=getOpenAIModel();
+  if(!key)return send(res,200,{ok:false,configured:false,keyValid:false,model,error:'OPENAI_API_KEY is not configured on the server.'});
   try{
-    const stat=fs.statSync(filePath);
-    if(stat.isDirectory()) filePath=path.join(filePath,'index.html');
-    const ext=path.extname(filePath).toLowerCase();
-    res.writeHead(200,{'Content-Type':MIME[ext] || 'application/octet-stream'});
-    fs.createReadStream(filePath).pipe(res);
-  }catch(e){ send(res,404,{ok:false,error:'Not found'}); }
+   const check=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,instructions:'Return the word OK.',input:'Health check',max_output_tokens:5})});
+   const raw=await check.text();
+   if(check.ok)return send(res,200,{ok:true,configured:true,keyValid:true,model});
+   const mapped=aiErrorResponse(check.status,raw);return send(res,mapped.status,{ok:false,configured:true,keyValid:check.status!==401,model,error:mapped.body.error,errorType:mapped.body.errorType});
+  }catch(e){return send(res,200,{ok:false,configured:true,keyValid:null,model,error:'Could not reach the OpenAI API from the server.'});}
+ }
+ if(req.method==='POST'&&url.pathname==='/api/ai-chat'){
+  try{
+   const b=await readJson(req,30000),message=String(b.message||'').trim().slice(0,2000);if(!message)return send(res,400,{ok:false,error:'Please enter a message.'});
+   const key=getOpenAIKey();if(!key)return send(res,503,{ok:false,error:'MSC AI is not connected yet. Add OPENAI_API_KEY to the server environment, then restart/redeploy the website.'});
+   const model=getOpenAIModel();const instructions=`You are the friendly MSC Mansion Space Creative Studio website concierge in India. Help prospective interior-design clients with services, process, consultation, and general estimate guidance. Be concise, warm, premium and practical. Never invent exact prices, guarantees, availability, project portfolios, or company policies. For project-specific pricing, ask the client to submit the consultation/estimate form.\nIf a client wants to book, direct them to the consultation form on this page. You may explain that indicative estimate calculations can vary after site measurement and scope confirmation. Do not ask for passwords, payment details, or sensitive information.`;
+   const api=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,instructions,input:message,max_output_tokens:500})});
+   const raw=await api.text();let responseData={};try{responseData=JSON.parse(raw);}catch{}
+   if(!api.ok){console.error('OpenAI API error',api.status,raw);const mapped=aiErrorResponse(api.status,raw);return send(res,mapped.status,mapped.body);}
+   const reply=String(responseData.output_text||((responseData.output||[]).flatMap(x=>x.content||[]).map(x=>x.text||'').filter(Boolean).join('\n'))||'Please contact our studio for assistance.');return send(res,200,{ok:true,reply});
+  }catch(e){console.error('AI chat failed',e);return send(res,500,{ok:false,error:'Could not connect to the AI assistant.'});}
+ }
+ if(req.method==='GET'&&url.pathname==='/api/admin/me')return send(res,200,{ok:isAuthed(req),name:data.admin.name,loginId:data.admin.loginId});
+ if(req.method==='GET'&&url.pathname==='/api/content')return send(res,200,{ok:true,content:data.content,socials:data.socials});
+ if(req.method==='GET'&&url.pathname==='/api/projects')return send(res,200,{ok:true,projects:data.projects});
+ if(req.method==='GET'&&url.pathname==='/api/laminates')return send(res,200,{ok:true,laminates:data.laminates});
+ if(req.method==='POST'&&url.pathname==='/api/content'){if(!requireAuth(req,res))return;try{const b=await readJson(req,200000);data.content=mergeDefaults(b.content||data.content,DEFAULT_CONTENT);data.socials=b.socials||data.socials;writeData(data);return send(res,200,{ok:true});}catch(e){return send(res,400,{ok:false,error:'Could not save website content.'});}}
+ if(req.method==='POST'&&url.pathname==='/api/admin/settings'){if(!requireAuth(req,res))return;try{const b=await readJson(req,30000);if(b.loginId)data.admin.loginId=String(b.loginId).trim().slice(0,80);if(b.name)data.admin.name=String(b.name).trim().slice(0,80);if(b.newPassword){if(String(b.newPassword).length<8)return send(res,400,{ok:false,error:'Password must be at least 8 characters.'});const p=makePassword(String(b.newPassword));data.admin.salt=p.salt;data.admin.hash=p.hash;}writeData(data);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Could not save admin settings.'});}}
+ if(req.method==='POST'&&url.pathname==='/api/projects'){if(!requireAuth(req,res))return;try{const b=await readJson(req,100000);if(!b.title||!b.image)return send(res,400,{ok:false,error:'Project title and image are required.'});const p={id:b.id||crypto.randomUUID(),title:String(b.title),location:String(b.location||''),category:String(b.category||'residential'),description:String(b.description||''),image:String(b.image),videoUrl:String(b.videoUrl||'')};data.projects.unshift(p);writeData(data);return send(res,200,{ok:true,project:p});}catch(e){return send(res,400,{ok:false,error:'Could not add project.'});}}
+ if(/^\/api\/projects\//.test(url.pathname)&&req.method==='PUT'){if(!requireAuth(req,res))return;try{const id=decodeURIComponent(url.pathname.split('/').pop()),idx=data.projects.findIndex(p=>p.id===id);if(idx<0)return send(res,404,{ok:false,error:'Project not found.'});const b=await readJson(req,100000);data.projects[idx]={...data.projects[idx],...b,id};writeData(data);return send(res,200,{ok:true,project:data.projects[idx]});}catch(e){return send(res,400,{ok:false,error:'Could not update project.'});}}
+ if(/^\/api\/projects\//.test(url.pathname)&&req.method==='DELETE'){if(!requireAuth(req,res))return;const id=decodeURIComponent(url.pathname.split('/').pop()),idx=data.projects.findIndex(p=>p.id===id);if(idx<0)return send(res,404,{ok:false,error:'Project not found.'});const p=data.projects[idx];data.projects.splice(idx,1);writeData(data);if(p.image&&p.image.startsWith('/uploads/'))try{fs.unlinkSync(path.join(UPLOADS_DIR,path.basename(p.image)))}catch{}if(p.videoUrl&&p.videoUrl.startsWith('/uploads/'))try{fs.unlinkSync(path.join(UPLOADS_DIR,path.basename(p.videoUrl)))}catch{}return send(res,200,{ok:true});}
+ if(req.method==='POST'&&url.pathname==='/api/laminates'){if(!requireAuth(req,res))return;try{const b=await readJson(req,50000);if(!b.name||!b.image)return send(res,400,{ok:false,error:'Laminate name and image are required.'});const item={id:crypto.randomUUID(),name:String(b.name).slice(0,120),image:String(b.image)};data.laminates.unshift(item);writeData(data);return send(res,200,{ok:true,laminate:item});}catch(e){return send(res,400,{ok:false,error:'Could not add laminate finish.'});}}
+ if(/^\/api\/laminates\//.test(url.pathname)&&req.method==='PUT'){if(!requireAuth(req,res))return;try{const id=decodeURIComponent(url.pathname.split('/').pop()),idx=data.laminates.findIndex(p=>p.id===id);if(idx<0)return send(res,404,{ok:false,error:'Laminate not found.'});const b=await readJson(req,50000);data.laminates[idx]={...data.laminates[idx],name:String(b.name||data.laminates[idx].name).slice(0,120),image:String(b.image||data.laminates[idx].image),id};writeData(data);return send(res,200,{ok:true,laminate:data.laminates[idx]});}catch(e){return send(res,400,{ok:false,error:'Could not update laminate.'});}}
+ if(/^\/api\/laminates\//.test(url.pathname)&&req.method==='DELETE'){if(!requireAuth(req,res))return;const id=decodeURIComponent(url.pathname.split('/').pop()),idx=data.laminates.findIndex(p=>p.id===id);if(idx<0)return send(res,404,{ok:false,error:'Laminate not found.'});const item=data.laminates[idx];data.laminates.splice(idx,1);writeData(data);if(item.image&&item.image.startsWith('/uploads/'))try{fs.unlinkSync(path.join(UPLOADS_DIR,path.basename(item.image)))}catch{}return send(res,200,{ok:true});}
+ if(req.method==='POST'&&url.pathname==='/api/media'){if(!requireAuth(req,res))return;try{const b=await readJson(req,35*1024*1024);if(!b.filename||!b.data||!b.mime)return send(res,400,{ok:false,error:'Media filename, mime and data are required.'});if(!isAllowedMedia(b.filename,b.mime))return send(res,400,{ok:false,error:'Only JPG, PNG, WEBP, MP4, WEBM and MOV are supported.'});const match=String(b.data).match(/^data:([^;]+);base64,(.+)$/s);if(!match||match[1]!==b.mime)return send(res,400,{ok:false,error:'Invalid media payload.'});const buffer=Buffer.from(match[2],'base64');if(buffer.length>25*1024*1024)return send(res,413,{ok:false,error:'Media is too large. Maximum is 25 MB.'});const filename=safeFileName(b.filename);fs.writeFileSync(path.join(UPLOADS_DIR,filename),buffer);return send(res,200,{ok:true,url:`/uploads/${filename}`,filename});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not upload media.'});}}
+ if(req.method==='DELETE'&&url.pathname==='/api/media'){if(!requireAuth(req,res))return;const raw=url.searchParams.get('file')||'',filename=path.basename(raw);if(!filename||filename!==raw)return send(res,400,{ok:false,error:'Invalid media file.'});try{if(fs.existsSync(path.join(UPLOADS_DIR,filename)))fs.unlinkSync(path.join(UPLOADS_DIR,filename));return send(res,200,{ok:true});}catch(e){return send(res,500,{ok:false,error:'Could not delete media.'});}}
+ if(req.method==='GET'&&url.pathname==='/api/leads'){if(!requireAuth(req,res))return;return send(res,200,{ok:true,leads:data.leads||[]});}
+ if(req.method==='DELETE'&&/^\/api\/leads\//.test(url.pathname)){if(!requireAuth(req,res))return;const id=decodeURIComponent(url.pathname.split('/').pop()),before=(data.leads||[]).length;data.leads=(data.leads||[]).filter(x=>x.id!==id);if(data.leads.length===before)return send(res,404,{ok:false,error:'Client enquiry not found.'});writeData(data);return send(res,200,{ok:true});}
+ if(req.method==='POST'&&url.pathname==='/api/lead'){try{const lead=await readJson(req);if(!lead.name||!lead.phone)return send(res,400,{ok:false,error:'Name and phone are required.'});const saved={id:crypto.randomUUID(),receivedAt:new Date().toISOString(),status:'New',source:String(lead.source||'Website'),name:String(lead.name||''),phone:String(lead.phone||''),email:String(lead.email||''),bhk:String(lead.bhk||''),property:String(lead.property||''),city:String(lead.city||''),area:String(lead.area||''),scope:String(lead.scope||''),finish:String(lead.finish||''),start:String(lead.start||''),estimate:String(lead.estimate||''),project:String(lead.project||''),message:String(lead.message||''),photoCount:Number(lead.photoCount||0),photoNames:Array.isArray(lead.photoNames)?lead.photoNames.slice(0,10).map(String):[]};data.leads=data.leads||[];data.leads.unshift(saved);data.leads=data.leads.slice(0,500);writeData(data);let notification={configured:false},emailNotification={configured:false};try{notification=await sendWhatsApp(leadMessage(saved));}catch(e){console.error('WhatsApp notification failed',e.message);}try{emailNotification=await sendEmail(saved);}catch(e){console.error('Email notification failed',e.message);emailNotification={configured:true,sentTo:false};}return send(res,200,{ok:true,saved:true,notificationConfigured:notification.configured||false,emailConfigured:emailNotification.configured||false,emailSent:emailNotification.sentTo||false});}catch(e){console.error(e);return send(res,500,{ok:false,error:'Could not process the enquiry.'});}}
+ let filePath=path.join(ROOT,url.pathname==='/'?'index.html':url.pathname);if(!filePath.startsWith(ROOT))return send(res,403,{ok:false});try{const stat=fs.statSync(filePath);if(stat.isDirectory())filePath=path.join(filePath,'index.html');const ext=path.extname(filePath).toLowerCase();res.writeHead(200,{'Content-Type':MIME[ext]||'application/octet-stream'});fs.createReadStream(filePath).pipe(res);}catch(e){send(res,404,{ok:false,error:'Not found'});}
 });
-
 server.listen(PORT,()=>console.log(`MSC website running at http://localhost:${PORT}`));

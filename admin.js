@@ -1,75 +1,109 @@
-const ADMIN_PASSWORD = 'MSC-ADMIN-2026'; // Change this before publishing.
-const TEXT_KEY = 'mscOwnerTextV1';
-const PROJECT_KEY = 'mscOwnerProjectsV1';
-const SOCIAL_KEY = 'mscOwnerSocialV1';
+const $=id=>document.getElementById(id);
+const loginScreen=$('loginScreen'), panel=$('panel');
+let content=null, projects=[], laminates=[], leads=[];
 
-const $ = id => document.getElementById(id);
-const loginScreen = $('loginScreen');
-const panel = $('panel');
-const loginStatus = $('loginStatus');
-
-function showPanel(){ loginScreen.classList.add('hidden'); panel.classList.remove('hidden'); loadText(); loadProjects(); loadSocials(); }
-$('loginBtn').addEventListener('click', () => {
-  if ($('adminPassword').value === ADMIN_PASSWORD) { sessionStorage.setItem('mscOwnerUnlocked','1'); showPanel(); }
-  else { loginStatus.classList.add('show'); }
-});
-$('adminPassword').addEventListener('keydown', e => { if(e.key === 'Enter') $('loginBtn').click(); });
-$('logoutBtn').addEventListener('click', () => { sessionStorage.removeItem('mscOwnerUnlocked'); location.reload(); });
-if(sessionStorage.getItem('mscOwnerUnlocked') === '1') showPanel();
-
-const defaults = {
-  heroEyebrow:'MAISON • SPACE • CREATIVE',
-  heroHeading:'Spaces that feel like you.',
-  heroCopy:'Thoughtful interiors, refined materials and timeless details — designed around the way you live.',
-  aboutP1:'MSC Mansion Space Creative Studio is an interior design studio creating sophisticated homes, workplaces and hospitality spaces with a strong sense of identity.',
-  aboutP2:'From the first sketch to the final styling, we bring together architecture, materials, lighting and furniture to make every corner intentional.'
+const defaultContent={
+  brandName:'MSC',brandSubtitle:'Mansion Space Creative Studio',
+  nav:{services:'Services',projects:'Projects',about:'About',process:'Process',contact:'Contact',estimate:'Get Estimate Quotation',consultation:'Book a Consultation'},
+  hero:{eyebrow:'MAISON • SPACE • CREATIVE',heading:'Spaces that feel like you.',copy:'Thoughtful interiors, refined materials and timeless details — designed around the way you live.',primary:'Get Estimate Quotation',secondary:'Explore our work'},
+  about:{label:'01 — THE STUDIO',kicker:'MANSION SPACE CREATIVE',heading:'We design the feeling behind the space.',p1:'MSC Mansion Space Creative Studio is an interior design studio creating sophisticated homes, workplaces and hospitality spaces with a strong sense of identity.',p2:'From the first sketch to the final styling, we bring together architecture, materials, lighting and furniture to make every corner intentional.',cta:'Talk to our designers'},
+  services:{label:'02 — WHAT WE DO',heading:'One studio. Every detail.',intro:'From a single room to a complete turnkey project, our services are built to make the design journey simple and beautifully considered.',items:[]},
+  statement:{quote:'Good design is not about filling a room. It is about knowing what to leave out.',small:'THE MSC APPROACH'},projects:{label:'03 — SELECTED WORK',heading:'Designed with intention.'},
+  why:{label:'04 — WHY MSC',heading:'A studio approach with a clear point of view.',lead:'We combine creative thinking with practical execution so the final space feels considered, not complicated.',features:[]},
+  process:{label:'05 — HOW IT WORKS',heading:'A clear path to your new space.',intro:'Our process keeps the creative experience exciting while every practical detail stays organised.',steps:[]},
+  estimate:{label:'06 — ESTIMATE QUOTATION',heading:'Get your interior estimate in 4 steps.',copy:'Tell us about your home, choose your scope, add your approximate area and upload room or floor-plan photos. MSC will generate an indicative starting estimate.',rate:1000,highlights:[]},
+  contact:{label:"07 — LET'S CREATE",heading:'Have a space in mind?',copy:'Tell us a little about your project. Our studio will get back to you to discuss the next step.'},
+  laminate:{label:'MATERIAL LIBRARY',heading:'Laminate Finishes',intro:'Browse our current laminate finish collection by name. Tap a finish to view it full size.'},footer:{tagline:'MAISON • SPACE • CREATIVE',closing:'Designed for spaces with soul.'}
 };
-function loadText(){
-  const data = {...defaults, ...(JSON.parse(localStorage.getItem(TEXT_KEY) || '{}'))};
-  Object.entries(data).forEach(([k,v]) => $(k).value=v);
-}
-$('saveText').addEventListener('click', () => {
-  const data = {};
-  ['heroEyebrow','heroHeading','heroCopy','aboutP1','aboutP2'].forEach(k => data[k]=$(k).value.trim());
-  localStorage.setItem(TEXT_KEY, JSON.stringify(data)); alert('Website text saved. Open the website in this same browser to preview it.');
-});
-$('resetText').addEventListener('click', () => { localStorage.removeItem(TEXT_KEY); loadText(); });
 
-const sampleProjects = [
- {id:'sample1',title:'The Walnut Residence',location:'Bengaluru · 3 BHK',category:'residential',image:'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1400&q=85'},
- {id:'sample2',title:'Ivory House',location:'Hyderabad · Villa',category:'residential',image:'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=85'},
- {id:'sample3',title:'Studio 27',location:'Hyderabad · Workspace',category:'commercial',image:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=85'},
- {id:'sample4',title:'Monument Kitchen',location:'Hyderabad · Custom Kitchen',category:'residential',image:'https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1800&q=85'}
-];
-let projects = [];
-function loadProjects(){ projects = JSON.parse(localStorage.getItem(PROJECT_KEY) || 'null') || sampleProjects.map(p=>({...p})); renderProjects(); }
-function renderProjects(){
-  const list=$('projectList'); list.innerHTML='';
-  projects.forEach((p,i)=>{
-    const row=document.createElement('div'); row.className='admin-project';
-    row.innerHTML=`<img src="${p.image}" alt=""><div class="meta"><strong>Project ${i+1}</strong><input data-k="title" value="${escapeHtml(p.title)}" placeholder="Project title"><input data-k="location" value="${escapeHtml(p.location)}" placeholder="City · Type"><select data-k="category"><option value="residential" ${p.category==='residential'?'selected':''}>Residential</option><option value="commercial" ${p.category==='commercial'?'selected':''}>Commercial</option></select></div><div class="admin-actions"><label class="admin-btn light">Replace image<input class="replace-image" type="file" accept="image/*" hidden></label><button class="admin-btn danger delete-project">Delete</button></div>`;
-    row.querySelectorAll('[data-k]').forEach(el=>el.addEventListener('input',()=>p[el.dataset.k]=el.value));
-    row.querySelector('.delete-project').addEventListener('click',()=>{ projects.splice(i,1); renderProjects(); });
-    row.querySelector('.replace-image').addEventListener('change',e=>{ const f=e.target.files[0]; if(f){ const r=new FileReader(); r.onload=ev=>{p.image=ev.target.result; renderProjects();}; r.readAsDataURL(f); } });
-    list.appendChild(row);
-  });
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
-$('projectUpload').addEventListener('change',e=>{
-  [...e.target.files].forEach(file=>{ const r=new FileReader(); r.onload=ev=>{projects.push({id:crypto.randomUUID(),title:file.name.replace(/\.[^.]+$/,''),location:'MSC Project',category:'residential',image:ev.target.result}); renderProjects();}; r.readAsDataURL(file); }); e.target.value='';
-});
-$('saveProjects').addEventListener('click',()=>{ localStorage.setItem(PROJECT_KEY,JSON.stringify(projects)); alert('Project changes saved. Open the website in this same browser to preview them.'); });
-$('clearProjects').addEventListener('click',()=>{ localStorage.removeItem(PROJECT_KEY); loadProjects(); });
+function deepMerge(base, extra){const out=Array.isArray(base)?[...base]:{...base};if(!extra||typeof extra!=='object')return out;for(const k of Object.keys(extra)){if(extra[k]&&typeof extra[k]==='object'&&!Array.isArray(extra[k])&&base?.[k]&&typeof base[k]==='object')out[k]=deepMerge(base[k],extra[k]);else out[k]=extra[k];}return out;}
+async function api(path,options={}){const r=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Request failed (${r.status})`);return d;}
+function msg(elId,text,type='ok'){const el=$(elId);if(!el)return;el.textContent=text;el.className=`status show ${type}`;clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),4000);}
+function notify(text,type='ok'){msg('contentStatus',text,type); if(type!=='ok') return;}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
 
-const socialDefaults = { instagramUrl:'', facebookUrl:'', youtubeUrl:'', pinterestUrl:'', ownerWhatsApp:'', leadMethod:'backend' };
-function loadSocials(){
-  const data={...socialDefaults,...JSON.parse(localStorage.getItem(SOCIAL_KEY)||'{}')};
-  Object.entries(data).forEach(([k,v])=>{ if($(k)) $(k).value=v; });
+function bindPasswordToggle(buttonId,inputId){const b=$(buttonId),i=$(inputId);if(!b||!i)return;b.onclick=()=>{const show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Hide':'Show';};}
+async function boot(){const me=await api('/api/admin/me').catch(()=>({ok:false}));if(me.ok)showPanel(me.name,me.loginId);bindPasswordToggle('toggleLoginPassword','adminPassword');bindPasswordToggle('toggleNewPassword','newPassword');bindPasswordToggle('toggleConfirmPassword','confirmPassword');}
+$('loginBtn').addEventListener('click',async()=>{try{const d=await api('/api/admin/login',{method:'POST',body:JSON.stringify({loginId:$('adminLoginId').value.trim(),password:$('adminPassword').value})});showPanel(d.name,d.loginId);}catch(e){msg('loginStatus',e.message,'warn');}});
+$('adminPassword').addEventListener('keydown',e=>{if(e.key==='Enter')$('loginBtn').click();});
+$('logoutBtn').addEventListener('click',async()=>{await api('/api/admin/logout',{method:'POST'}).catch(()=>{});location.reload();});
+
+async function showPanel(name,loginId){loginScreen.classList.add('hidden');panel.classList.remove('hidden');$('adminWelcomeName').textContent=`Signed in as ${name}${loginId?` · ${loginId}`:''}`;await Promise.all([loadContent(),loadProjects(),loadLaminates(),loadSocials(),loadLeads()]);try{const me=await api('/api/admin/me');$('accountLoginId').value=me.loginId||'';}catch(e){}bindPasswordToggle('toggleLoginPassword','adminPassword');bindPasswordToggle('toggleNewPassword','newPassword');bindPasswordToggle('toggleConfirmPassword','confirmPassword');}
+
+async function loadContent(){const d=await api('/api/content');content=deepMerge(defaultContent,d.content||{});renderContentForm();}
+function setv(id,v){if($(id))$(id).value=v??'';}
+function renderContentForm(){
+  const c=content;setv('brandName',c.brandName);setv('brandSubtitle',c.brandSubtitle);
+  [['navServices',c.nav.services],['navProjects',c.nav.projects],['navAbout',c.nav.about],['navProcess',c.nav.process],['navContact',c.nav.contact],['navEstimate',c.nav.estimate],['navConsultation',c.nav.consultation],['heroEyebrow',c.hero.eyebrow],['heroHeading',c.hero.heading],['heroCopy',c.hero.copy],['heroPrimary',c.hero.primary],['heroSecondary',c.hero.secondary],['aboutLabel',c.about.label],['aboutKicker',c.about.kicker],['aboutHeading',c.about.heading],['aboutP1',c.about.p1],['aboutP2',c.about.p2],['aboutCta',c.about.cta],['servicesLabel',c.services.label],['servicesHeading',c.services.heading],['servicesIntro',c.services.intro],['statementQuote',c.statement.quote],['statementSmall',c.statement.small],['projectsLabel',c.projects.label],['projectsHeading',c.projects.heading],['whyLabel',c.why.label],['whyHeading',c.why.heading],['whyLead',c.why.lead],['processLabel',c.process.label],['processHeading',c.process.heading],['processIntro',c.process.intro],['estimateLabel',c.estimate.label],['estimateHeading',c.estimate.heading],['estimateCopy',c.estimate.copy],['estimateRate',c.estimate.rate||1000],['contactLabel',c.contact.label],['contactHeading',c.contact.heading],['contactCopy',c.contact.copy],['estimateHighlights',(c.estimate.highlights||[]).join('\n')],['laminateLabel',c.laminate.label],['laminateHeading',c.laminate.heading],['laminateIntro',c.laminate.intro],['footerTagline',c.footer.tagline],['footerClosing',c.footer.closing]].forEach(([id,v])=>setv(id,v));
+  renderServices();renderFeatures();renderSteps();
+  $('accountName').value='';$('newPassword').value='';$('confirmPassword').value='';
 }
-$('saveSocials').addEventListener('click',()=>{
-  const data={};
-  ['instagramUrl','facebookUrl','youtubeUrl','pinterestUrl','ownerWhatsApp','leadMethod'].forEach(k=>data[k]=$(k).value.trim());
-  localStorage.setItem(SOCIAL_KEY,JSON.stringify(data));
-  alert('Social & lead settings saved.');
-});
-$('resetSocials').addEventListener('click',()=>{ localStorage.removeItem(SOCIAL_KEY); loadSocials(); });
+function renderServices(){const box=$('servicesList');box.innerHTML='';(content.services.items||[]).forEach((s,i)=>{const row=document.createElement('div');row.className='service-row';row.innerHTML=`<div class="row-head"><div class="row-title">Service ${String(i+1).padStart(2,'0')}</div><button class="btn danger small" type="button">Delete</button></div><div class="admin-grid" style="margin-top:10px"><div class="field"><label>Number</label><input data-k="number" value="${escapeHtml(s.number||String(i+1).padStart(2,'0'))}"></div><div class="field"><label>Title</label><input data-k="title" value="${escapeHtml(s.title||'')}"></div><div class="field full"><label>Description</label><textarea data-k="description">${escapeHtml(s.description||'')}</textarea></div></div>`;row.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>content.services.items[i][el.dataset.k]=el.value);row.querySelector('.danger').onclick=()=>{content.services.items.splice(i,1);renderServices();};box.appendChild(row);});}
+function renderFeatures(){const box=$('featuresList');box.innerHTML='';(content.why.features||[]).forEach((s,i)=>{const row=document.createElement('div');row.className='feature-row';row.innerHTML=`<div class="row-head"><div class="row-title">Why MSC point ${i+1}</div><button class="btn danger small" type="button">Delete</button></div><div class="admin-grid" style="margin-top:10px"><div class="field"><label>Number</label><input data-k="number" value="${escapeHtml(s.number||String(i+1).padStart(2,'0'))}"></div><div class="field"><label>Title</label><input data-k="title" value="${escapeHtml(s.title||'')}"></div><div class="field full"><label>Description</label><textarea data-k="description">${escapeHtml(s.description||'')}</textarea></div></div>`;row.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>content.why.features[i][el.dataset.k]=el.value);row.querySelector('.danger').onclick=()=>{content.why.features.splice(i,1);renderFeatures();};box.appendChild(row);});}
+function renderSteps(){const box=$('stepsList');box.innerHTML='';(content.process.steps||[]).forEach((s,i)=>{const row=document.createElement('div');row.className='step-row';row.innerHTML=`<div class="row-head"><div class="row-title">Step ${i+1}</div><button class="btn danger small" type="button">Delete</button></div><div class="admin-grid" style="margin-top:10px"><div class="field"><label>Number</label><input data-k="number" value="${escapeHtml(s.number||String(i+1).padStart(2,'0'))}"></div><div class="field"><label>Title</label><input data-k="title" value="${escapeHtml(s.title||'')}"></div><div class="field full"><label>Description</label><textarea data-k="description">${escapeHtml(s.description||'')}</textarea></div></div>`;row.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>content.process.steps[i][el.dataset.k]=el.value);row.querySelector('.danger').onclick=()=>{content.process.steps.splice(i,1);renderSteps();};box.appendChild(row);});}
+
+$('addService').onclick=()=>{content.services.items.push({number:String(content.services.items.length+1).padStart(2,'0'),title:'New Service',description:'Describe this service here.'});renderServices();};
+$('addFeature').onclick=()=>{content.why.features.push({number:String(content.why.features.length+1).padStart(2,'0'),title:'New Point',description:'Describe why clients should choose MSC.'});renderFeatures();};
+$('addStep').onclick=()=>{content.process.steps.push({number:String(content.process.steps.length+1).padStart(2,'0'),title:'New Step',description:'Describe this stage.'});renderSteps();};
+function collectContent(){
+  const c=deepMerge(defaultContent,content);c.brandName=$('brandName').value.trim();c.brandSubtitle=$('brandSubtitle').value.trim();
+  Object.assign(c.nav,{services:$('navServices').value.trim(),projects:$('navProjects').value.trim(),about:$('navAbout').value.trim(),process:$('navProcess').value.trim(),contact:$('navContact').value.trim(),estimate:$('navEstimate').value.trim(),consultation:$('navConsultation').value.trim()});
+  Object.assign(c.hero,{eyebrow:$('heroEyebrow').value.trim(),heading:$('heroHeading').value.trim(),copy:$('heroCopy').value.trim(),primary:$('heroPrimary').value.trim(),secondary:$('heroSecondary').value.trim()});
+  Object.assign(c.about,{label:$('aboutLabel').value.trim(),kicker:$('aboutKicker').value.trim(),heading:$('aboutHeading').value.trim(),p1:$('aboutP1').value.trim(),p2:$('aboutP2').value.trim(),cta:$('aboutCta').value.trim()});
+  Object.assign(c.services,{label:$('servicesLabel').value.trim(),heading:$('servicesHeading').value.trim(),intro:$('servicesIntro').value.trim()});
+  Object.assign(c.statement,{quote:$('statementQuote').value.trim(),small:$('statementSmall').value.trim()});Object.assign(c.projects,{label:$('projectsLabel').value.trim(),heading:$('projectsHeading').value.trim()});Object.assign(c.why,{label:$('whyLabel').value.trim(),heading:$('whyHeading').value.trim(),lead:$('whyLead').value.trim()});Object.assign(c.process,{label:$('processLabel').value.trim(),heading:$('processHeading').value.trim(),intro:$('processIntro').value.trim()});
+  Object.assign(c.estimate,{label:$('estimateLabel').value.trim(),heading:$('estimateHeading').value.trim(),copy:$('estimateCopy').value.trim(),rate:Number($('estimateRate').value||1000),highlights:$('estimateHighlights').value.split('\n').map(x=>x.trim()).filter(Boolean)});Object.assign(c.contact,{label:$('contactLabel').value.trim(),heading:$('contactHeading').value.trim(),copy:$('contactCopy').value.trim()});Object.assign(c.laminate,{label:$('laminateLabel').value.trim(),heading:$('laminateHeading').value.trim(),intro:$('laminateIntro').value.trim()});Object.assign(c.footer,{tagline:$('footerTagline').value.trim(),closing:$('footerClosing').value.trim()});return c;
+}
+$('saveContent').onclick=async()=>{try{content=collectContent();await api('/api/content',{method:'POST',body:JSON.stringify({content,socials:await getSocialObject()})});msg('contentStatus','All website content saved to the live server.','ok');updateDashboard();}catch(e){msg('contentStatus',e.message,'warn');}};
+$('reloadContent').onclick=()=>loadContent().catch(e=>msg('contentStatus',e.message,'warn'));
+
+document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'}));
+
+async function uploadMedia(file){if(!file)return '';if(file.size>25*1024*1024)throw new Error('Media must be 25 MB or smaller.');const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error('Could not read file.'));r.readAsDataURL(file);});const d=await api('/api/media',{method:'POST',body:JSON.stringify({filename:file.name,mime:file.type,data})});return d.url;}
+async function deleteMedia(url){if(!url||!url.includes('/uploads/'))return;await fetch('/api/media?file='+encodeURIComponent(url.split('/').pop()),{method:'DELETE'}).catch(()=>{});}
+
+async function loadProjects(){const d=await api('/api/projects');projects=d.projects||[];renderProjects();updateDashboard();}
+function renderProjects(){const box=$('projectList');box.innerHTML='';projects.forEach((p,i)=>{const row=document.createElement('div');row.className='portfolio-row';row.innerHTML=`${p.videoUrl?`<video src="${escapeHtml(p.videoUrl)}" controls muted playsinline style="width:150px;height:105px;object-fit:cover;border-radius:11px"></video>`:`<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.title)}">`}<div class="meta"><input data-k="title" value="${escapeHtml(p.title)}" placeholder="Project title"><input data-k="location" value="${escapeHtml(p.location)}" placeholder="Location / type"><select data-k="category"><option value="residential" ${p.category==='residential'?'selected':''}>Residential</option><option value="commercial" ${p.category==='commercial'?'selected':''}>Commercial</option><option value="hospitality" ${p.category==='hospitality'?'selected':''}>Hospitality</option></select><input data-k="description" value="${escapeHtml(p.description||'')}" placeholder="Short description"><div class="helper">${p.videoUrl?'Video attached':'No video attached'}</div></div><div class="btns actions"><label class="btn light small">Replace image<input class="replace-img" type="file" accept="image/*" hidden></label><label class="btn light small">${p.videoUrl?'Replace video':'Add video'}<input class="replace-video" type="file" accept="video/mp4,video/webm,video/quicktime" hidden></label>${p.videoUrl?'<button class="btn light small remove-video">Remove video</button>':''}<button class="btn primary small save-project">Save</button><button class="btn danger small delete-project">Delete</button></div>`;
+  row.querySelectorAll('[data-k]').forEach(el=>el.oninput=()=>p[el.dataset.k]=el.value);row.querySelector('.save-project').onclick=async()=>{try{const d=await api('/api/projects/'+encodeURIComponent(p.id),{method:'PUT',body:JSON.stringify(p)});projects[i]=d.project;msg('contentStatus','Project changes saved.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+  row.querySelector('.replace-img').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const old=p.image;p.image=await uploadImage(f);await api('/api/projects/'+encodeURIComponent(p.id),{method:'PUT',body:JSON.stringify({image:p.image})});await deleteMedia(old);renderProjects();msg('contentStatus','Project image replaced.','ok');}catch(err){msg('contentStatus',err.message,'warn');}};
+  row.querySelector('.replace-video').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const old=p.videoUrl;p.videoUrl=await uploadMedia(f);await api('/api/projects/'+encodeURIComponent(p.id),{method:'PUT',body:JSON.stringify({videoUrl:p.videoUrl})});await deleteMedia(old);renderProjects();msg('contentStatus','Project video updated.','ok');}catch(err){msg('contentStatus',err.message,'warn');}};
+  row.querySelector('.remove-video')?.addEventListener('click',async()=>{try{const old=p.videoUrl;p.videoUrl='';await api('/api/projects/'+encodeURIComponent(p.id),{method:'PUT',body:JSON.stringify({videoUrl:''})});await deleteMedia(old);renderProjects();msg('contentStatus','Project video removed.','ok');}catch(err){msg('contentStatus',err.message,'warn');}});
+  row.querySelector('.delete-project').onclick=async()=>{if(!confirm(`Delete “${p.title||'this project'}” permanently?`))return;try{await api('/api/projects/'+encodeURIComponent(p.id),{method:'DELETE'});projects.splice(i,1);renderProjects();updateDashboard();msg('contentStatus','Project deleted.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+  box.appendChild(row);});if(!projects.length)box.innerHTML='<div class="note">No portfolio projects yet. Add your first project above.</div>';}
+async function uploadImage(file){return uploadMedia(file);}
+let newProjectImage='',newProjectVideo='';
+$('projectAddImage').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{newProjectImage=await uploadImage(f);$('newProjectPreview').src=newProjectImage;$('newProjectPreview').classList.add('show');}catch(err){msg('contentStatus',err.message,'warn');}};
+$('projectAddVideo').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{newProjectVideo=await uploadMedia(f);msg('contentStatus','Project video ready.','ok');}catch(err){msg('contentStatus',err.message,'warn');}};
+$('addProject').onclick=async()=>{const p={title:$('newProjectTitle').value.trim(),location:$('newProjectLocation').value.trim(),category:$('newProjectCategory').value,description:$('newProjectDescription').value.trim(),image:newProjectImage,videoUrl:newProjectVideo};if(!p.title||!p.image)return msg('contentStatus','Project title and image are required.','warn');try{const d=await api('/api/projects',{method:'POST',body:JSON.stringify(p)});projects.unshift(d.project);renderProjects();updateDashboard();clearProjectForm();msg('contentStatus','New project added.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+function clearProjectForm(){['newProjectTitle','newProjectLocation','newProjectDescription'].forEach(id=>$(id).value='');$('newProjectCategory').value='residential';$('projectAddImage').value='';$('projectAddVideo').value='';newProjectImage='';newProjectVideo='';$('newProjectPreview').removeAttribute('src');$('newProjectPreview').classList.remove('show');}
+$('clearProjectForm').onclick=clearProjectForm;
+
+async function loadLaminates(){const d=await api('/api/laminates');laminates=d.laminates||[];renderLaminates();updateDashboard();}
+function renderLaminates(){const box=$('laminateList');box.innerHTML='';laminates.forEach((l,i)=>{const card=document.createElement('div');card.className='laminate-card';card.innerHTML=`<img src="${escapeHtml(l.image)}" alt="${escapeHtml(l.name)}"><div class="lmeta"><input data-name value="${escapeHtml(l.name)}"><div class="btns"><button class="btn light small save-l">Save</button><button class="btn danger small delete-l">Delete</button></div></div>`;card.querySelector('[data-name]').oninput=e=>l.name=e.target.value;card.querySelector('.save-l').onclick=async()=>{try{await api('/api/laminates/'+encodeURIComponent(l.id),{method:'PUT',body:JSON.stringify({name:l.name})});msg('contentStatus','Laminate name updated.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};card.querySelector('.delete-l').onclick=async()=>{if(!confirm(`Delete laminate “${l.name}”?`))return;try{await api('/api/laminates/'+encodeURIComponent(l.id),{method:'DELETE'});laminates.splice(i,1);renderLaminates();updateDashboard();msg('contentStatus','Laminate finish deleted.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};box.appendChild(card);});if(!laminates.length)box.innerHTML='<div class="note" style="grid-column:1/-1">No laminate finishes yet.</div>';}
+let newLaminateImage='';
+$('newLaminateImage').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{newLaminateImage=await uploadImage(f);$('newLaminatePreview').src=newLaminateImage;$('newLaminatePreview').classList.add('show');}catch(err){msg('contentStatus',err.message,'warn');}};
+$('addLaminate').onclick=async()=>{const name=$('newLaminateName').value.trim();if(!name||!newLaminateImage)return msg('contentStatus','Add a laminate finish name and image.','warn');try{const d=await api('/api/laminates',{method:'POST',body:JSON.stringify({name,image:newLaminateImage})});laminates.unshift(d.laminate);renderLaminates();updateDashboard();$('newLaminateName').value='';$('newLaminateImage').value='';newLaminateImage='';$('newLaminatePreview').removeAttribute('src');$('newLaminatePreview').classList.remove('show');msg('contentStatus','Laminate finish added to the website.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+
+async function loadLeads(){const d=await api('/api/leads');leads=d.leads||[];renderLeads();updateDashboard();}
+function leadValue(v){return escapeHtml(v||'—');}
+function formatLeadDate(v){try{return new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'});}catch{return v||'—';}}
+function renderLeads(){const box=$('leadList');if(!box)return;const count=leads.length;$('leadCountText').textContent=`${count} client ${count===1?'enquiry':'enquiries'}`;box.innerHTML='';if(!count){box.innerHTML='<div class="empty-leads">No client enquiries yet. Submitted consultation and estimate requests will appear here.</div>';return;}leads.forEach((l,i)=>{const card=document.createElement('article');card.className=`lead-card ${l.status==='New'?'new':''}`;const phoneRaw=String(l.phone||'').replace(/[^0-9+]/g,'');const email=l.email?String(l.email):'';card.innerHTML=`<div class="lead-head"><div><h3>${leadValue(l.name)}</h3><p>${leadValue(l.source)} · Received ${formatLeadDate(l.receivedAt)}</p></div><span class="lead-badge">${leadValue(l.status||'New')}</span></div><div class="lead-body"><div class="lead-grid"><div class="lead-field"><span>Phone / WhatsApp</span><strong>${leadValue(l.phone)}</strong></div><div class="lead-field"><span>Email</span><strong>${leadValue(l.email)}</strong></div><div class="lead-field"><span>City</span><strong>${leadValue(l.city)}</strong></div><div class="lead-field"><span>Property</span><strong>${leadValue(l.property)}</strong></div><div class="lead-field"><span>BHK</span><strong>${leadValue(l.bhk)}</strong></div><div class="lead-field"><span>Area</span><strong>${l.area?leadValue(l.area+' sq.ft.'):'—'}</strong></div><div class="lead-field"><span>Scope</span><strong>${leadValue(l.scope||l.project)}</strong></div><div class="lead-field"><span>Finish</span><strong>${leadValue(l.finish)}</strong></div><div class="lead-field"><span>Start</span><strong>${leadValue(l.start)}</strong></div><div class="lead-field"><span>Estimate</span><strong>${leadValue(l.estimate)}</strong></div><div class="lead-field"><span>Photos</span><strong>${Number(l.photoCount||0)} uploaded</strong></div></div>${l.message?`<div class="lead-message"><strong>Message:</strong> ${leadValue(l.message)}</div>`:''}${l.photoNames?.length?`<div class="lead-message"><strong>Photo names:</strong> ${l.photoNames.map(leadValue).join(', ')}</div>`:''}<div class="lead-actions">${phoneRaw?`<a class="btn light small" href="tel:${encodeURIComponent(phoneRaw)}">Call client</a>`:''}${email?`<a class="btn light small" href="mailto:${encodeURIComponent(email)}">Email client</a>`:''}${phoneRaw?`<a class="btn primary small" target="_blank" rel="noopener" href="https://wa.me/${encodeURIComponent(phoneRaw.replace(/\D/g,''))}">WhatsApp</a>`:''}<button class="btn danger small delete-lead" type="button">Delete enquiry</button></div></div>`;card.querySelector('.delete-lead').onclick=async()=>{if(!confirm(`Delete enquiry from “${l.name||'this client'}”?`))return;try{await api('/api/leads/'+encodeURIComponent(l.id),{method:'DELETE'});leads.splice(i,1);renderLeads();updateDashboard();}catch(e){msg('contentStatus',e.message,'warn');}};box.appendChild(card);});}
+$('refreshLeads').onclick=async()=>{try{await loadLeads();msg('contentStatus','Client enquiries refreshed.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+
+async function getSocialObject(){return {instagramUrl:$('instagramUrl').value.trim(),facebookUrl:$('facebookUrl').value.trim(),youtubeUrl:$('youtubeUrl').value.trim(),pinterestUrl:$('pinterestUrl').value.trim()};}
+async function loadSocials(){const d=await api('/api/content');const s=d.socials||{};$('instagramUrl').value=s.instagramUrl||'';$('facebookUrl').value=s.facebookUrl||'';$('youtubeUrl').value=s.youtubeUrl||'';$('pinterestUrl').value=s.pinterestUrl||'';}
+$('saveSocials').onclick=async()=>{try{const social=await getSocialObject();const current=await api('/api/content');await api('/api/content',{method:'POST',body:JSON.stringify({content:content||current.content,socials:social})});msg('contentStatus','Social links saved.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+
+$('saveAccount').onclick=async()=>{const loginId=$('accountLoginId').value.trim();const name=$('accountName').value.trim();const pass=$('newPassword').value;const confirm=$('confirmPassword').value;if(!loginId)return msg('accountStatus','Enter a login ID.','warn');if(!name)return msg('accountStatus','Enter an admin name.','warn');if(pass&&pass!==confirm)return msg('accountStatus','New password and confirmation do not match.','warn');if(pass&&pass.length<8)return msg('accountStatus','Password must be at least 8 characters.','warn');try{const d=await api('/api/admin/settings',{method:'POST',body:JSON.stringify({loginId,name,newPassword:pass})});$('accountLoginId').value=d.loginId||loginId;$('accountName').value='';$('newPassword').value='';$('confirmPassword').value='';$('adminWelcomeName').textContent=`Signed in as ${d.name} · ${d.loginId}`;msg('accountStatus','Admin access updated successfully.','ok');}catch(e){msg('accountStatus',e.message,'warn');}};
+
+function updateDashboard(){$('statProjects').textContent=projects.length;$('statServices').textContent=(content?.services?.items||[]).length;$('statLaminates').textContent=laminates.length;$('statLeads').textContent=leads.length;}
+
+$('exportBackup').onclick=async()=>{try{const c=await api('/api/content');const p=await api('/api/projects');const l=await api('/api/laminates');const ld=await api('/api/leads');const b={version:6,createdAt:new Date().toISOString(),content:c.content,projects:p.projects,laminates:l.laminates,socials:c.socials,leads:ld.leads};const blob=new Blob([JSON.stringify(b,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`MSC-website-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);}catch(e){msg('contentStatus',e.message,'warn');}};
+$('importBackup').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const b=JSON.parse(await f.text());if(b.content)await api('/api/content',{method:'POST',body:JSON.stringify({content:b.content,socials:b.socials||{}})});for(const l of laminates){if(!b.laminates?.find(x=>x.id===l.id))continue;} // media is intentionally not copied automatically
+  // Rebuild server-side records from backup, while retaining uploaded media URLs.
+  if(Array.isArray(b.projects)){for(const old of projects){if(!b.projects.find(x=>x.id===old.id))await api('/api/projects/'+encodeURIComponent(old.id),{method:'DELETE'}).catch(()=>{});}for(const item of b.projects){if(projects.find(x=>x.id===item.id))await api('/api/projects/'+encodeURIComponent(item.id),{method:'PUT',body:JSON.stringify(item)});else await api('/api/projects',{method:'POST',body:JSON.stringify(item)});}}
+  if(Array.isArray(b.laminates)){for(const old of laminates){if(!b.laminates.find(x=>x.id===old.id))await api('/api/laminates/'+encodeURIComponent(old.id),{method:'DELETE'}).catch(()=>{});}for(const item of b.laminates){if(laminates.find(x=>x.id===item.id))await api('/api/laminates/'+encodeURIComponent(item.id),{method:'PUT',body:JSON.stringify(item)});else await api('/api/laminates',{method:'POST',body:JSON.stringify(item)});}}
+  await Promise.all([loadContent(),loadProjects(),loadLaminates(),loadSocials(),loadLeads()]);msg('contentStatus','Backup imported. Uploaded media files remain where their URLs point.','ok');
+}catch(err){msg('contentStatus',err.message,'warn');}e.target.value='';};
+
+boot().catch(e=>console.warn('MSC admin boot failed',e));
