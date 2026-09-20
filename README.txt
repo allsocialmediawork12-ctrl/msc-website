@@ -61,17 +61,47 @@ Example:
 
 The rate can also be edited from the Admin Panel if required later.
 
-WHATSAPP LEAD NOTIFICATIONS
----------------------------
-Private owner WhatsApp alert recipients are configured server-side as:
-- +91 70933 28871
-- +91 93474 98256
+WHATSAPP CLOUD API WEBHOOK
+-------------------------
+This build now includes a Meta WhatsApp Cloud API webhook at:
 
-For actual WhatsApp delivery on Render, set your Twilio environment variables:
-TWILIO_ACCOUNT_SID
-TWILIO_AUTH_TOKEN
-TWILIO_WHATSAPP_FROM
-OWNER_WHATSAPP_TO (optional; defaults to the two MSC numbers above)
+  GET/POST /webhook
+
+After the project is deployed on Render, use:
+
+  https://YOUR-RENDER-SERVICE.onrender.com/webhook
+
+Meta webhook setup:
+1. Add META_WEBHOOK_VERIFY_TOKEN and META_APP_SECRET in Render Environment.
+2. In Meta Developers, open WhatsApp > Configuration > Webhooks and configure the Callback URL above.
+3. Enter the exact same value used for META_WEBHOOK_VERIFY_TOKEN as the Verify Token.
+4. Click Verify and Save.
+5. Subscribe to the messages webhook field.
+
+Webhook security:
+- GET /webhook validates the Meta verify token and returns hub.challenge.
+- POST /webhook validates X-Hub-Signature-256 with META_APP_SECRET before parsing the payload.
+- Received text/button/interactive messages are kept in data/site.json (latest 200) and logged by the Node.js server.
+
+META CLOUD API OUTBOUND LEAD NOTIFICATIONS (OPTIONAL)
+------------------------------------------------------
+The existing website enquiry flow can also notify the owner through Meta Cloud API.
+
+Set these Render environment variables:
+  META_ACCESS_TOKEN
+  META_PHONE_NUMBER_ID
+  META_GRAPH_API_VERSION=v26.0
+  META_WHATSAPP_TO
+  META_WHATSAPP_TEMPLATE_NAME
+  META_WHATSAPP_TEMPLATE_LANGUAGE=en_US
+
+The template used by this code must contain one body variable, {{1}}, because the full enquiry message is sent as that single template parameter.
+
+The server uses Meta Cloud API when these Meta outbound variables are configured. If they are not configured, the existing Twilio WhatsApp notification code remains available as a fallback.
+
+SECURITY
+--------
+Keep META_APP_SECRET, META_ACCESS_TOKEN, Resend keys and any Twilio credentials only in Render Environment Variables. Do not commit them to GitHub.
 
 MEDIA
 -----
@@ -133,4 +163,4 @@ Keep RESEND_API_KEY private. Do not commit it to GitHub or paste it into the web
 
 For production sender branding, verify your own domain in Resend and set RESEND_FROM to an address on that verified domain. Resend documents Node.js/Express email sending at https://resend.com/nodejs and https://resend.com/express.
 
-The website continues to save every enquiry to data/site.json even if email is temporarily unavailable. WhatsApp is disabled by default to prevent invalid Twilio credentials from generating repeated notification errors.
+The website continues to save every enquiry to data/site.json even if email is temporarily unavailable. The Meta webhook itself does not require the outbound Meta variables; it only requires META_WEBHOOK_VERIFY_TOKEN and META_APP_SECRET. Keep outbound WhatsApp credentials private in Render.
