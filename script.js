@@ -336,6 +336,10 @@ document.head.appendChild(revealStyle);
   } catch(e){ console.warn('MSC social settings could not be applied',e); }
 })();
 
+
+const footerNewsletter=document.getElementById('footerNewsletter');
+if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.preventDefault();const email=document.getElementById('footerEmail');toast.textContent='Thank you — we will keep you updated on new MSC projects.';toast.classList.add('show');email.value='';setTimeout(()=>toast.classList.remove('show'),3800);});}
+
 // Owner panel content overrides. Edits made in admin.html are applied on the same browser.
 (function applyMSCAdminChanges(){
   try {
@@ -417,7 +421,20 @@ document.head.appendChild(revealStyle);
     const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.filter===filter.dataset.filter?'':'none');});
 
     // Social media
-    const socials=contentData.socials||{}; const socialMap={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest',whatsappUrl:'socialWhatsapp'}; Object.entries(socialMap).forEach(([key,id])=>{const el=document.getElementById(id);if(el){if(socials[key]){el.href=socials[key];el.classList.remove('hidden-social');}else el.classList.add('hidden-social');}}); if(socials.whatsappUrl){const el=document.getElementById('floatWhatsapp');if(el){el.href=socials.whatsappUrl;el.classList.remove('hidden-social');}} if(socials.instagramUrl){const el=document.getElementById('floatInstagram');if(el){el.href=socials.instagramUrl;el.classList.remove('hidden-social');}} const socialLinks=document.getElementById('socialLinks');if(socialLinks)socialLinks.dataset.style=socials.iconStyle||'circle';
+    const socials=contentData.socials||{};
+    const socialMap={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest',whatsappUrl:'socialWhatsapp'};
+    const floatMap={instagramUrl:'floatInstagram',facebookUrl:'floatFacebook',youtubeUrl:'floatYoutube',pinterestUrl:'floatPinterest',whatsappUrl:'floatWhatsapp'};
+    Object.entries(socialMap).forEach(([key,id])=>{
+      const el=document.getElementById(id);
+      if(el && socials[key]){el.href=socials[key];el.classList.remove('social-unconfigured');}
+      else if(el){el.classList.add('social-unconfigured');}
+    });
+    Object.entries(floatMap).forEach(([key,id])=>{
+      const el=document.getElementById(id);
+      if(el && socials[key]){el.href=socials[key];el.classList.remove('social-unconfigured');el.setAttribute('aria-disabled','false');}
+      else if(el){el.classList.add('social-unconfigured');el.setAttribute('aria-disabled','true');el.addEventListener('click',e=>e.preventDefault(),{once:false});}
+    });
+    const socialLinks=document.getElementById('socialLinks');if(socialLinks)socialLinks.dataset.style=socials.iconStyle||'circle';
     // Demo video and loader
     const siteSettings=contentData.siteSettings||{}; MSC_LOADER_DURATION=Math.min(8000,Math.max(1500,Number(siteSettings.loaderDuration||4500))); const videoShell=document.getElementById('demoVideoShell'); if(videoShell&&siteSettings.demoVideoUrl)videoShell.innerHTML=`<video class="demo-video" src="${esc(siteSettings.demoVideoUrl)}" controls muted playsinline preload="metadata"></video>`;
     // Laminates

@@ -341,28 +341,57 @@
     </section>
   </main>
 
-  <footer class="site-footer">
+  <footer class="site-footer premium-footer">
+    <div class="footer-ornament footer-ornament-left" aria-hidden="true"></div>
+    <div class="footer-ornament footer-ornament-right" aria-hidden="true"></div>
     <div class="footer-top">
-      <div class="footer-brand"><img src="assets/msc-logo-light.png" alt="MSC logo"><p>MAISON • SPACE • CREATIVE</p></div>
-      <div class="footer-nav"><a href="#services">Services</a><a href="#projects">Projects</a><a href="#about">About</a><a href="#contact">Contact</a></div>
-      <div class="footer-contact"><span>Start a conversation</span><a href="#contact">Book a consultation ↗</a>
-        <div class="social-links" aria-label="MSC social media">
-          <a id="socialInstagram" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Instagram</a>
-          <a id="socialFacebook" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Facebook</a>
-          <a id="socialYoutube" href="#" target="_blank" rel="noopener" class="social-link hidden-social">YouTube</a>
-          <a id="socialPinterest" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Pinterest</a>
-          <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" class="social-link hidden-social">WhatsApp</a>
-        </div>
+      <div class="footer-brand">
+        <img src="assets/msc-logo-light.png" alt="MSC logo">
+        <p>MAISON • SPACE • CREATIVE</p>
+        <span class="footer-brand-line"></span>
+        <small>SPACES THAT INSPIRE</small>
+      </div>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="#services">Services</a><a href="#projects">Projects</a><a href="#about">About</a><a href="#contact">Contact</a>
+      </nav>
+      <div class="footer-contact">
+        <span>Start a conversation</span>
+        <a class="footer-consultation" href="#contact">Book a consultation <b>↗</b></a>
+        <p>Let's bring your vision to life. We'd love to hear about your project.</p>
       </div>
     </div>
-    <div class="footer-bottom"><span>© <span id="year"></span> MSC Mansion Space Creative Studio</span><span>Designed for spaces with soul.</span></div>
+    <div class="footer-social-bar">
+      <div class="footer-social-group" aria-label="Follow MSC on social media">
+        <a id="socialInstagram" href="#" target="_blank" rel="noopener" class="social-link" aria-label="Instagram"><span>◎</span></a>
+        <a id="socialFacebook" href="#" target="_blank" rel="noopener" class="social-link" aria-label="Facebook"><span>f</span></a>
+        <a id="socialYoutube" href="#" target="_blank" rel="noopener" class="social-link" aria-label="YouTube"><span>▶</span></a>
+        <a id="socialPinterest" href="#" target="_blank" rel="noopener" class="social-link" aria-label="Pinterest"><span>P</span></a>
+        <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" class="social-link" aria-label="WhatsApp"><span>WA</span></a>
+      </div>
+      <div class="footer-follow">
+        <strong>Follow us</strong>
+        <span>FOR LATEST PROJECTS &amp; UPDATES</span>
+      </div>
+      <div class="footer-copy"><span>© <span id="year"></span> MSC Mansion Space Creative Studio.</span><small>ALL RIGHTS RESERVED.</small></div>
+      <form class="footer-newsletter" id="footerNewsletter">
+        <label class="sr-only" for="footerEmail">Your email address</label>
+        <span aria-hidden="true">✉</span>
+        <input id="footerEmail" type="email" placeholder="Your email address" required>
+        <button type="submit" aria-label="Subscribe">→</button>
+      </form>
+    </div>
+    <div class="footer-bottom"><span>Designed for spaces with soul.</span><span>MSC • Hyderabad</span></div>
   </footer>
 
-  <div class="toast" id="toast">Thank you — your consultation request is ready to be connected.</div>
-  <div class="floating-socials" id="floatingSocials" aria-label="Social media quick links">
-    <a id="floatWhatsapp" class="float-social whatsapp hidden-social" target="_blank" rel="noopener" aria-label="WhatsApp">WA</a>
-    <a id="floatInstagram" class="float-social hidden-social" target="_blank" rel="noopener" aria-label="Instagram">IG</a>
+  <div class="floating-socials premium-floating-socials" id="floatingSocials" aria-label="MSC social media quick links">
+    <div class="floating-social-label">FOLLOW MSC</div>
+    <a id="floatInstagram" class="float-social" target="_blank" rel="noopener" aria-label="Instagram"><span>◎</span><em>Instagram</em></a>
+    <a id="floatFacebook" class="float-social" target="_blank" rel="noopener" aria-label="Facebook"><span>f</span><em>Facebook</em></a>
+    <a id="floatYoutube" class="float-social" target="_blank" rel="noopener" aria-label="YouTube"><span>▶</span><em>YouTube</em></a>
+    <a id="floatPinterest" class="float-social" target="_blank" rel="noopener" aria-label="Pinterest"><span>P</span><em>Pinterest</em></a>
+    <a id="floatWhatsapp" class="float-social whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><span>WA</span><em>WhatsApp</em></a>
   </div>
+  <div class="toast" id="toast">Thank you — your consultation request is ready to be connected.</div>
   <button class="back-top" id="backTop" aria-label="Back to top">↑</button>
   <script src="script.js"></script>
 </body>
