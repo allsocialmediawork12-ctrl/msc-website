@@ -183,3 +183,15 @@ body{background:var(--cream);color:var(--ink)}
 
 /* Header quick links for both estimation tools */
 .header-actions{display:flex;align-items:center;gap:8px;white-space:nowrap}.header-wallprint,.header-quote{border:1px solid rgba(181,138,74,.48);padding:9px 11px;color:#71542f;background:rgba(255,255,255,.35);font-size:10px;letter-spacing:.025em;text-decoration:none}.header-wallprint:hover,.header-quote:hover{background:rgba(181,138,74,.09);border-color:var(--gold)}.header-wallprint span,.header-quote span{margin-left:3px}@media(max-width:1250px){.desktop-nav{gap:15px;font-size:10px}.header-actions{gap:5px}.header-wallprint,.header-quote{padding:8px 7px;font-size:9px}.header-cta{padding:8px 9px;font-size:9px}}@media(max-width:1000px){.header-wallprint,.header-quote{display:none}}
+
+/* First screen of the estimate modal: choose which service to price. */
+.estimate-chooser{padding:2px 0 12px}
+.estimate-chooser h3{font-size:31px;line-height:1.15;margin:0 0 10px;color:#302a24}
+.estimate-type-options{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+.estimate-type-card{position:relative;min-height:175px;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:10px;padding:23px 22px;border:1px solid #e0d6ca;border-radius:3px;background:#fbf8f2;color:#3b342d;cursor:pointer;transition:background .2s,border-color .2s,transform .2s,box-shadow .2s}
+.estimate-type-card:hover,.estimate-type-card:focus-visible{border-color:#b58a4a;background:#fffdf9;box-shadow:0 10px 28px rgba(181,138,74,.12);transform:translateY(-2px);outline:none}
+.estimate-type-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid #d8c4a5;border-radius:50%;color:#a87935;font-size:23px}
+.estimate-type-card strong{font-size:18px;color:#302a24}
+.estimate-type-card small{font-size:12px;line-height:1.55;color:#756d76;max-width:260px}
+.estimate-type-arrow{position:absolute;right:18px;top:18px;color:#a87935;font-size:18px}
+@media(max-width:700px){.estimate-type-options{grid-template-columns:1fr}.estimate-type-card{min-height:145px;padding:19px}.estimate-chooser h3{font-size:27px}}

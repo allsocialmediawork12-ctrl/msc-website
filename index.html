@@ -244,7 +244,27 @@
           <span class="step-count" id="stepCount">1 / 4</span>
         </div>
 
-        <div class="estimate-progress" aria-hidden="true">
+        <div class="estimate-chooser" id="estimateChooser">
+          <p class="wizard-kicker">ESTIMATE QUOTATION</p>
+          <h3>What would you like to estimate?</h3>
+          <p class="wizard-subtitle">Choose the type of work to get a tailored cost estimate.</p>
+          <div class="estimate-type-options">
+            <button class="estimate-type-card" id="chooseWallArt" type="button">
+              <span class="estimate-type-icon" aria-hidden="true">▧</span>
+              <strong>Digital Wall Art</strong>
+              <small>Estimate wall printing based on width and height · ₹200/sq.ft.</small>
+              <span class="estimate-type-arrow" aria-hidden="true">↗</span>
+            </button>
+            <button class="estimate-type-card" id="chooseInterior" type="button">
+              <span class="estimate-type-icon" aria-hidden="true">⌂</span>
+              <strong>Interior Work</strong>
+              <small>Estimate your home or commercial interior project.</small>
+              <span class="estimate-type-arrow" aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="estimate-progress" id="estimateProgress" aria-hidden="true">
           <span class="progress-dot active"></span><span class="progress-line"></span>
           <span class="progress-dot"></span><span class="progress-line"></span>
           <span class="progress-dot"></span><span class="progress-line"></span>

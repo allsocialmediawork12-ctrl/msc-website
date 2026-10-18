@@ -55,6 +55,9 @@ contactForm.addEventListener('submit', async event => {
 const modal = document.getElementById('estimateModal');
 const closeEstimate = document.getElementById('estimateClose');
 const steps = [...document.querySelectorAll('.estimate-step')];
+const estimateChooser = document.getElementById('estimateChooser');
+const estimateProgress = document.getElementById('estimateProgress');
+const estimateBrandCount = document.getElementById('stepCount');
 const nextBtn = document.getElementById('estimateNext');
 const backBtn = document.getElementById('estimateBack');
 const stepCount = document.getElementById('stepCount');
@@ -85,6 +88,16 @@ function openEstimate() {
   modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   currentStep = 1;
+  estimateThankyou?.classList.remove('show');
+  estimateThankyou?.setAttribute('aria-hidden', 'true');
+  estimateChooser.style.display = 'block';
+  estimateProgress.style.display = 'none';
+  steps.forEach(step => { step.classList.remove('active'); step.style.display = 'none'; });
+  estimateResultCard.style.display = 'none';
+  estimateNav.style.display = 'none';
+  estimateNote.style.display = 'none';
+  whatsappBtn.classList.remove('show');
+  estimateBrandCount.style.display = 'none';
   updateWizard();
 }
 function closeEstimateModal() {
@@ -105,6 +118,24 @@ document.querySelectorAll('[data-open-estimate]').forEach(btn => btn.addEventLis
 closeEstimate.addEventListener('click', closeEstimateModal);
 modal.addEventListener('click', event => { if (event.target === modal) closeEstimateModal(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal.classList.contains('open')) closeEstimateModal(); });
+
+document.getElementById('chooseInterior').addEventListener('click', () => {
+  estimateChooser.style.display = 'none';
+  estimateProgress.style.display = '';
+  estimateBrandCount.style.display = '';
+  estimateResultCard.style.display = '';
+  estimateNav.style.display = '';
+  estimateNote.style.display = '';
+  steps.forEach(step => { step.style.display = ''; });
+  currentStep = 1;
+  updateWizard();
+});
+document.getElementById('chooseWallArt').addEventListener('click', () => {
+  closeEstimateModal();
+  const wallEstimator = document.getElementById('wall-print-estimator');
+  wallEstimator?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('wallPrintWidth')?.focus({ preventScroll: true });
+});
 
 document.querySelectorAll('.choice-card').forEach(card => card.addEventListener('click', () => {
   const field = card.dataset.field;
