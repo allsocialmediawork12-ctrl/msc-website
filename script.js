@@ -1,4 +1,3 @@
-const loader = document.getElementById('loader');
 const header = document.getElementById('siteHeader');
 const menuToggle = document.getElementById('menuToggle');
 const nav = document.querySelector('.desktop-nav');
@@ -6,7 +5,6 @@ const backTop = document.getElementById('backTop');
 const toast = document.getElementById('toast');
 const year = document.getElementById('year');
 
-let MSC_LOADER_DURATION=4500; window.addEventListener('load', () => setTimeout(() => loader.classList.add('hide'), MSC_LOADER_DURATION));
 year.textContent = new Date().getFullYear();
 
 window.addEventListener('scroll', () => {
@@ -435,8 +433,8 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
       else if(el){el.classList.add('social-unconfigured');el.setAttribute('aria-disabled','true');el.addEventListener('click',e=>e.preventDefault(),{once:false});}
     });
     const socialLinks=document.getElementById('socialLinks');if(socialLinks)socialLinks.dataset.style=socials.iconStyle||'circle';
-    // Demo video and loader
-    const siteSettings=contentData.siteSettings||{}; MSC_LOADER_DURATION=Math.min(8000,Math.max(1500,Number(siteSettings.loaderDuration||4500))); const videoShell=document.getElementById('demoVideoShell'); if(videoShell&&siteSettings.demoVideoUrl)videoShell.innerHTML=`<video class="demo-video" src="${esc(siteSettings.demoVideoUrl)}" controls muted playsinline preload="metadata"></video>`;
+    // Demo video (opening logo loader removed)
+    const siteSettings=contentData.siteSettings||{}; const videoShell=document.getElementById('demoVideoShell'); if(videoShell&&siteSettings.demoVideoUrl)videoShell.innerHTML=`<video class="demo-video" src="${esc(siteSettings.demoVideoUrl)}" controls muted playsinline preload="metadata"></video>`;
     // Laminates
     setText('#laminateLabel',c.laminate?.label); const lh=document.querySelector('#laminateHeading'); if(lh&&c.laminate?.heading){const words=String(c.laminate.heading).split(/\s+/);const last=esc(words.pop()||'');lh.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>';}
     setText('#laminateIntro',c.laminate?.intro);
@@ -452,3 +450,23 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
 })();
 
 
+
+
+// Digital wall print cost estimator — indicative rate ₹200 per sq.ft.
+(function initWallPrintEstimator(){
+  const widthInput=document.getElementById('wallPrintWidth');
+  const heightInput=document.getElementById('wallPrintHeight');
+  const areaOutput=document.getElementById('wallPrintArea');
+  const costOutput=document.getElementById('wallPrintCost');
+  if(!widthInput||!heightInput||!areaOutput||!costOutput)return;
+  const money=value=>'₹'+Math.round(value).toLocaleString('en-IN');
+  function update(){
+    const width=Math.max(0,Number(widthInput.value)||0);
+    const height=Math.max(0,Number(heightInput.value)||0);
+    const area=width*height;
+    areaOutput.textContent=area.toLocaleString('en-IN',{maximumFractionDigits:2})+' sq.ft.';
+    costOutput.textContent=money(area*200);
+  }
+  widthInput.addEventListener('input',update);
+  heightInput.addEventListener('input',update);
+})();

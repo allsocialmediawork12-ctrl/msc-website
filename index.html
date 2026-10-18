@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="page-loader" id="loader"><div class="loader-logo"><img src="assets/msc-logo-light.png" alt="MSC"><span>MAISON • SPACE • CREATIVE</span></div></div>
 
   <header class="site-header" id="siteHeader">
     <a class="brand" href="#home" aria-label="MSC home">
@@ -22,6 +21,7 @@
     <nav class="desktop-nav" aria-label="Primary navigation">
       <a href="#home">Home</a>
       <a href="#services">Services</a>
+      <a href="#wall-print-estimator">Wall Print Cost</a>
       <a href="#projects">Projects</a>
       <a href="#about">About</a>
       <a href="#process">Process</a>
@@ -99,6 +99,29 @@
           <p>Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling.</p>
           <a href="#contact">Explore service <span>↗</span></a>
         </article>
+      </div>
+    </section>
+
+    <section class="wall-print-estimator section-pad" id="wall-print-estimator">
+      <div class="wall-print-layout">
+        <div class="wall-print-intro">
+          <div class="section-label">03 — DIGITAL WALL PRINT</div>
+          <h2>Estimate your<br><em>wall print cost.</em></h2>
+          <p>Enter the wall dimensions to get an approximate digital wall printing cost. Our indicative rate is ₹200 per sq.ft.</p>
+          <p class="wall-print-disclaimer">Final pricing may vary based on wall condition, design, preparation and site measurements.</p>
+        </div>
+        <div class="wall-print-card">
+          <div class="wall-print-fields">
+            <label for="wallPrintWidth">Wall width (ft)<input id="wallPrintWidth" type="number" min="0" step="0.1" placeholder="e.g. 12" inputmode="decimal"></label>
+            <label for="wallPrintHeight">Wall height (ft)<input id="wallPrintHeight" type="number" min="0" step="0.1" placeholder="e.g. 10" inputmode="decimal"></label>
+          </div>
+          <div class="wall-print-result" aria-live="polite">
+            <div><span>ESTIMATED WALL AREA</span><strong id="wallPrintArea">0 sq.ft.</strong></div>
+            <div><span>APPROXIMATE COST</span><strong id="wallPrintCost">₹0</strong></div>
+          </div>
+          <p class="wall-print-rate">Calculation: wall width × wall height × ₹200 per sq.ft.</p>
+          <a class="btn btn-gold wall-print-cta" href="#contact">Request a wall print quote <span>↗</span></a>
+        </div>
       </div>
     </section>
 
