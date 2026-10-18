@@ -1,3 +1,4 @@
+const loader = document.getElementById('loader');
 const header = document.getElementById('siteHeader');
 const menuToggle = document.getElementById('menuToggle');
 const nav = document.querySelector('.desktop-nav');
@@ -5,6 +6,8 @@ const backTop = document.getElementById('backTop');
 const toast = document.getElementById('toast');
 const year = document.getElementById('year');
 
+// Intro loader removed so the homepage appears immediately.
+if (loader) loader.remove();
 year.textContent = new Date().getFullYear();
 
 window.addEventListener('scroll', () => {
@@ -55,9 +58,6 @@ contactForm.addEventListener('submit', async event => {
 const modal = document.getElementById('estimateModal');
 const closeEstimate = document.getElementById('estimateClose');
 const steps = [...document.querySelectorAll('.estimate-step')];
-const estimateChooser = document.getElementById('estimateChooser');
-const estimateProgress = document.getElementById('estimateProgress');
-const estimateBrandCount = document.getElementById('stepCount');
 const nextBtn = document.getElementById('estimateNext');
 const backBtn = document.getElementById('estimateBack');
 const stepCount = document.getElementById('stepCount');
@@ -84,20 +84,15 @@ let uploadedFiles = [];
 const MSC_WHATSAPP_NUMBER = ''; // Keep blank on the public site. Use the secure backend notification setup for owner WhatsApp alerts.
 
 function openEstimate() {
+  modal.classList.add('choosing-estimate');
+  modal.classList.remove('wall-art-mode');
+  document.getElementById('estimateChoiceScreen').style.display = '';
+  document.getElementById('wallArtEstimator').style.display = 'none';
+  document.getElementById('wallArtEstimator').setAttribute('aria-hidden', 'true');
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   currentStep = 1;
-  estimateThankyou?.classList.remove('show');
-  estimateThankyou?.setAttribute('aria-hidden', 'true');
-  estimateChooser.style.display = 'block';
-  estimateProgress.style.display = 'none';
-  steps.forEach(step => { step.classList.remove('active'); step.style.display = 'none'; });
-  estimateResultCard.style.display = 'none';
-  estimateNav.style.display = 'none';
-  estimateNote.style.display = 'none';
-  whatsappBtn.classList.remove('show');
-  estimateBrandCount.style.display = 'none';
   updateWizard();
 }
 function closeEstimateModal() {
@@ -115,26 +110,81 @@ document.querySelectorAll('[data-open-estimate]').forEach(btn => btn.addEventLis
   event.preventDefault();
   openEstimate();
 }));
+
+document.querySelectorAll('[data-open-wall-art]').forEach(btn => btn.addEventListener('click', event => {
+  event.preventDefault();
+  openEstimate();
+  document.getElementById('chooseWallArt').click();
+}));
 closeEstimate.addEventListener('click', closeEstimateModal);
 modal.addEventListener('click', event => { if (event.target === modal) closeEstimateModal(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && modal.classList.contains('open')) closeEstimateModal(); });
 
+// Estimation type chooser: Digital Wall Art or Interior Work.
+const estimateChoiceScreen = document.getElementById('estimateChoiceScreen');
+const wallArtEstimator = document.getElementById('wallArtEstimator');
+const wallWidthInput = document.getElementById('wallWidth');
+const wallHeightInput = document.getElementById('wallHeight');
+const wallAreaOutput = document.getElementById('wallArea');
+const wallCostOutput = document.getElementById('wallCost');
+let WALL_PRINT_RATE = 200;
+function updateWallPrintEstimate() {
+  const width = Math.max(0, Number(wallWidthInput.value || 0));
+  const height = Math.max(0, Number(wallHeightInput.value || 0));
+  const area = width * height;
+  wallAreaOutput.textContent = `${Number(area.toFixed(2)).toLocaleString('en-IN')} sq.ft.`;
+  wallCostOutput.textContent = `₹${Math.round(area * WALL_PRINT_RATE).toLocaleString('en-IN')}`;
+}
 document.getElementById('chooseInterior').addEventListener('click', () => {
-  estimateChooser.style.display = 'none';
-  estimateProgress.style.display = '';
-  estimateBrandCount.style.display = '';
-  estimateResultCard.style.display = '';
-  estimateNav.style.display = '';
-  estimateNote.style.display = '';
-  steps.forEach(step => { step.style.display = ''; });
+  modal.classList.remove('choosing-estimate', 'wall-art-mode');
+  estimateChoiceScreen.style.display = 'none';
+  wallArtEstimator.style.display = 'none';
+  wallArtEstimator.setAttribute('aria-hidden', 'true');
   currentStep = 1;
   updateWizard();
 });
 document.getElementById('chooseWallArt').addEventListener('click', () => {
-  closeEstimateModal();
-  const wallEstimator = document.getElementById('wall-print-estimator');
-  wallEstimator?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  document.getElementById('wallPrintWidth')?.focus({ preventScroll: true });
+  modal.classList.remove('choosing-estimate');
+  modal.classList.add('wall-art-mode');
+  estimateChoiceScreen.style.display = 'none';
+  wallArtEstimator.style.display = 'block';
+  wallArtEstimator.setAttribute('aria-hidden', 'false');
+  wallWidthInput.value = '';
+  wallHeightInput.value = '';
+  updateWallPrintEstimate();
+});
+document.getElementById('wallArtBack').addEventListener('click', () => {
+  wallArtEstimator.style.display = 'none';
+  wallArtEstimator.setAttribute('aria-hidden', 'true');
+  estimateChoiceScreen.style.display = '';
+  modal.classList.remove('wall-art-mode');
+  modal.classList.add('choosing-estimate');
+});
+wallWidthInput.addEventListener('input', updateWallPrintEstimate);
+wallHeightInput.addEventListener('input', updateWallPrintEstimate);
+document.getElementById('requestWallQuote').addEventListener('click', async () => {
+  const width = Number(wallWidthInput.value || 0);
+  const height = Number(wallHeightInput.value || 0);
+  if (width <= 0 || height <= 0) {
+    toast.textContent = 'Please enter both wall width and wall height.';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+    return;
+  }
+  const area = width * height;
+  const payload = { source: 'Digital Wall Art Quote', service: 'Digital Wall Art', wallWidthFt: width, wallHeightFt: height, areaSqFt: Number(area.toFixed(2)), ratePerSqFt: WALL_PRINT_RATE, estimate: `₹${Math.round(area * WALL_PRINT_RATE).toLocaleString('en-IN')}` };
+  const button = document.getElementById('requestWallQuote');
+  button.disabled = true;
+  try {
+    const response = await fetch('/api/lead', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if (!response.ok) throw new Error('Quote endpoint unavailable');
+    toast.textContent = 'Your wall print quote request has been submitted to MSC.';
+  } catch (error) {
+    toast.textContent = 'Your estimate is ready. Please contact MSC to request the wall print quote.';
+  }
+  button.disabled = false;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
 });
 
 document.querySelectorAll('.choice-card').forEach(card => card.addEventListener('click', () => {
@@ -206,7 +256,7 @@ function calculateEstimate() {
   const RATE_PER_SQFT = Number(window.MSC_RATE_PER_SQFT || 1000);
   const base = area * RATE_PER_SQFT;
   estimateAmount.textContent = `₹${Math.round(base).toLocaleString('en-IN')}`;
-  estimateSummary.textContent = `${selected.bhk || selected.property} · ${Number(area).toLocaleString('en-IN')} sq.ft. × ₹1,000/sq.ft. · ${selected.city || 'your city'}`;
+  estimateSummary.textContent = `${selected.bhk || selected.property} · ${Number(area).toLocaleString('en-IN')} sq.ft. · ${selected.city || 'your city'}`;
   estimateResultCard.classList.add('ready');
 }
 
@@ -352,22 +402,7 @@ const revealStyle = document.createElement('style');
 revealStyle.textContent = '.revealed{opacity:1!important;transform:translateY(0)!important}';
 document.head.appendChild(revealStyle);
 
-// Owner panel social links. Public visitors only see social URLs; the owner WhatsApp number is never inserted here.
-(function applyMSCSocialLinks(){
-  try {
-    const social=JSON.parse(localStorage.getItem('mscOwnerSocialV1')||'null');
-    if(!social) return;
-    const map={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest',whatsappUrl:'socialWhatsapp'};
-    Object.entries(map).forEach(([key,id])=>{
-      const el=document.getElementById(id);
-      if(el && social[key]){ el.href=social[key]; el.classList.remove('hidden-social'); }
-    });
-  } catch(e){ console.warn('MSC social settings could not be applied',e); }
-})();
-
-
-const footerNewsletter=document.getElementById('footerNewsletter');
-if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.preventDefault();const email=document.getElementById('footerEmail');toast.textContent='Thank you — we will keep you updated on new MSC projects.';toast.classList.add('show');email.value='';setTimeout(()=>toast.classList.remove('show'),3800);});}
+// Social links are populated only from saved admin-panel settings returned by the server.
 
 // Owner panel content overrides. Edits made in admin.html are applied on the same browser.
 (function applyMSCAdminChanges(){
@@ -405,6 +440,7 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
     const contentData=await contentRes.json(); const projectData=await projectRes.json(); const laminateData=await laminateRes.json();
     const c=contentData.content||{};
     window.MSC_RATE_PER_SQFT=Number(c.estimate?.rate||1000);
+    WALL_PRINT_RATE=Number(c.estimate?.wallPrintRate||200);
 
     // Header / navigation
     const brandImg=document.querySelector('.brand img'); if(brandImg) brandImg.alt=(c.brandName||'MSC')+' '+(c.brandSubtitle||'');
@@ -425,7 +461,12 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
     setText('#services .section-label',c.services?.label); setText('#services .section-head h2',c.services?.heading); setText('#services .section-head > p',c.services?.intro);
     const serviceGrid=document.querySelector('#services .service-grid');
     if(serviceGrid && Array.isArray(c.services?.items)){
-      serviceGrid.innerHTML=c.services.items.map((it,i)=>`<article class="service-card ${i===0?'featured':''}">${it.image?`<div class="service-image"><img src="${esc(it.image)}" alt="${esc(it.title||'MSC service')}" loading="lazy"></div>`:``}<div class="service-number">${esc(it.number||String(i+1).padStart(2,'0'))}</div><h3>${esc(it.title||'Service')}</h3><p>${esc(it.description||'')}</p><a href="#contact">Explore service <span>↗</span></a></article>`).join('');
+      serviceGrid.innerHTML=c.services.items.map((it,i)=>`<article class="service-card ${i===0?'featured':''}" tabindex="0" role="button" data-service-index="${i}" aria-label="Explore ${esc(it.title||'service')}">${it.image?`<div class="service-image"><img src="${esc(it.image)}" alt="${esc(it.title||'MSC service')}" loading="lazy"></div>`:``}<div class="service-number">${esc(it.number||String(i+1).padStart(2,'0'))}</div><h3>${esc(it.title||'Service')}</h3><p>${esc(it.description||'')}</p><a href="#service-details" data-service-index="${i}">Explore service <span>↗</span></a></article>`).join('');
+      const detailModal=document.getElementById('serviceDetailModal');
+      const closeDetail=()=>{detailModal?.classList.remove('open');detailModal?.setAttribute('aria-hidden','true');document.body.style.overflow='';};
+      const openDetail=(index)=>{const svc=c.services.items[index];if(!svc||!detailModal)return;document.getElementById('serviceDetailKicker').textContent=`SERVICE ${svc.number||String(index+1).padStart(2,'0')} · MSC`;document.getElementById('serviceDetailTitle').textContent=svc.title||'Our Service';document.getElementById('serviceDetailDescription').textContent=svc.description||'';const opts=Array.isArray(svc.details)?svc.details:[];document.getElementById('serviceDetailOptions').innerHTML=opts.length?opts.map(d=>`<article class="service-detail-option">${d.image?`<img src="${esc(d.image)}" alt="${esc(d.title||'Service option')}" loading="lazy">`:''}<h3>${esc(d.title||'Option')}</h3><p>${esc(d.description||'')}</p></article>`).join(''):'<div class="service-detail-empty">More details about this service are coming soon. Contact MSC to discuss your requirements.</div>';const cta=document.getElementById('serviceDetailCTA');cta.href=String(svc.title||'').toLowerCase().includes('digital wall art')?'#estimate':'#contact';cta.textContent=String(svc.title||'').toLowerCase().includes('digital wall art')?'Get a wall art estimate ↗':'Discuss this service ↗';detailModal.classList.add('open');detailModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';};
+      serviceGrid.querySelectorAll('article[data-service-index]').forEach(el=>{el.addEventListener('click',e=>{if(e.target.closest('a'))e.preventDefault();openDetail(Number(el.dataset.serviceIndex));});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(Number(el.dataset.serviceIndex));}});});
+      document.getElementById('serviceDetailClose')?.addEventListener('click',closeDetail);detailModal?.addEventListener('click',e=>{if(e.target===detailModal)closeDetail();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
     }
 
     // Statement / Projects / Why / Process
@@ -440,7 +481,7 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
     // Estimate / contact / footer
     setText('#estimate .section-label',c.estimate?.label); const eh=document.querySelector('#estimate .estimate-teaser h2'); if(eh&&c.estimate?.heading){const words=String(c.estimate.heading).split(/\s+/);const last=esc(words.pop()||'');eh.innerHTML=esc(words.join(' '))+'<br><em>'+last+'</em>';} setText('#estimate .estimate-teaser p',c.estimate?.copy);
     const high=document.querySelector('.estimate-highlights'); if(high&&Array.isArray(c.estimate?.highlights)) high.innerHTML=c.estimate.highlights.map((h,i)=>`<div><strong>${String(i+1).padStart(2,'0')}</strong><span>${esc(h)}</span></div>`).join('');
-    setText('#estimateNote',`Estimate basis: ₹${Number(c.estimate?.rate||1000).toLocaleString('en-IN')} per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.`);
+    setText('#estimateNote','Final pricing may vary after site measurement and detailed scope confirmation.');
     setText('#contact .section-label',c.contact?.label); const ch=document.querySelector('#contact h2'); if(ch&&c.contact?.heading){const words=String(c.contact.heading).split(/\s+/);const last=esc(words.pop()||'');ch.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>'; } setText('#contact .consultation-inner > div > p',c.contact?.copy);
     setText('.footer-brand p',c.footer?.tagline); setText('.footer-bottom span:last-child',c.footer?.closing);
 
@@ -449,22 +490,27 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
     if(grid){grid.innerHTML=projects.map((p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`;return `<article class="project-card ${i===0?'tall':''}" data-category="${esc(p.category||'residential')}">${media}<div class="project-info"><span>${esc(p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;}).join('');}
     const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.filter===filter.dataset.filter?'':'none');});
 
-    // Social media
+    // Show only social networks whose URLs are saved in the admin panel.
     const socials=contentData.socials||{};
     const socialMap={instagramUrl:'socialInstagram',facebookUrl:'socialFacebook',youtubeUrl:'socialYoutube',pinterestUrl:'socialPinterest',whatsappUrl:'socialWhatsapp'};
-    const floatMap={instagramUrl:'floatInstagram',facebookUrl:'floatFacebook',youtubeUrl:'floatYoutube',pinterestUrl:'floatPinterest',whatsappUrl:'floatWhatsapp'};
+    const floatingMap={instagramUrl:'floatInstagram',facebookUrl:'floatFacebook',youtubeUrl:'floatYoutube',pinterestUrl:'floatPinterest',whatsappUrl:'floatWhatsapp'};
     Object.entries(socialMap).forEach(([key,id])=>{
-      const el=document.getElementById(id);
-      if(el && socials[key]){el.href=socials[key];el.classList.remove('social-unconfigured');}
-      else if(el){el.classList.add('social-unconfigured');}
+      const el=document.getElementById(id); if(!el)return;
+      const href=String(socials[key]||'').trim();
+      if(href){el.href=href;el.classList.remove('hidden-social');}
+      else {el.removeAttribute('href');el.classList.add('hidden-social');}
     });
-    Object.entries(floatMap).forEach(([key,id])=>{
-      const el=document.getElementById(id);
-      if(el && socials[key]){el.href=socials[key];el.classList.remove('social-unconfigured');el.setAttribute('aria-disabled','false');}
-      else if(el){el.classList.add('social-unconfigured');el.setAttribute('aria-disabled','true');el.addEventListener('click',e=>e.preventDefault(),{once:false});}
+    let visibleFloating=0;
+    Object.entries(floatingMap).forEach(([key,id])=>{
+      const el=document.getElementById(id); if(!el)return;
+      const href=String(socials[key]||'').trim();
+      if(href){el.href=href;el.classList.remove('hidden-social');visibleFloating++;}
+      else {el.removeAttribute('href');el.classList.add('hidden-social');}
     });
+    const floating=document.getElementById('floatingSocials');
+    if(floating){floating.hidden=visibleFloating===0;floating.style.display=visibleFloating?'flex':'none';}
     const socialLinks=document.getElementById('socialLinks');if(socialLinks)socialLinks.dataset.style=socials.iconStyle||'circle';
-    // Demo video (opening logo loader removed)
+    // Demo video and loader
     const siteSettings=contentData.siteSettings||{}; const videoShell=document.getElementById('demoVideoShell'); if(videoShell&&siteSettings.demoVideoUrl)videoShell.innerHTML=`<video class="demo-video" src="${esc(siteSettings.demoVideoUrl)}" controls muted playsinline preload="metadata"></video>`;
     // Laminates
     setText('#laminateLabel',c.laminate?.label); const lh=document.querySelector('#laminateHeading'); if(lh&&c.laminate?.heading){const words=String(c.laminate.heading).split(/\s+/);const last=esc(words.pop()||'');lh.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>';}
@@ -473,7 +519,7 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
     if(lgrid) lgrid.innerHTML=laminates.map(x=>`<figure class="laminate-public-card"><img src="${esc(x.image)}" alt="${esc(x.name)}" loading="lazy"><figcaption><strong>${esc(x.name)}</strong>${x.material?`<span>${esc(x.material)}</span>`:``}${x.thickness?`<span>Thickness: ${esc(x.thickness)}</span>`:``}${x.finish?`<span>Finish: ${esc(x.finish)}</span>`:``}${x.specification?`<small>${esc(x.specification)}</small>`:``}</figcaption></figure>`).join(''); if(lempty) lempty.style.display=laminates.length?'none':'block';
 
     // Update estimate rate after CMS settings are loaded.
-    const note=document.getElementById('estimateNote'); if(note) note.textContent=`Estimate basis: ₹${Number(c.estimate?.rate||1000).toLocaleString('en-IN')} per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.`;
+    const note=document.getElementById('estimateNote'); if(note) note.textContent='Final pricing may vary after site measurement and detailed scope confirmation.';
 
     // Reveal newly rendered content.
     document.querySelectorAll('.service-card,.project-card,.process-step,.feature-list > div,.estimate-highlights div,.laminate-public-card').forEach(el=>{el.style.opacity='1';el.style.transform='none';});
@@ -481,23 +527,3 @@ if(footerNewsletter){footerNewsletter.addEventListener('submit',event=>{event.pr
 })();
 
 
-
-
-// Digital wall print cost estimator — indicative rate ₹200 per sq.ft.
-(function initWallPrintEstimator(){
-  const widthInput=document.getElementById('wallPrintWidth');
-  const heightInput=document.getElementById('wallPrintHeight');
-  const areaOutput=document.getElementById('wallPrintArea');
-  const costOutput=document.getElementById('wallPrintCost');
-  if(!widthInput||!heightInput||!areaOutput||!costOutput)return;
-  const money=value=>'₹'+Math.round(value).toLocaleString('en-IN');
-  function update(){
-    const width=Math.max(0,Number(widthInput.value)||0);
-    const height=Math.max(0,Number(heightInput.value)||0);
-    const area=width*height;
-    areaOutput.textContent=area.toLocaleString('en-IN',{maximumFractionDigits:2})+' sq.ft.';
-    costOutput.textContent=money(area*200);
-  }
-  widthInput.addEventListener('input',update);
-  heightInput.addEventListener('input',update);
-})();

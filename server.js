@@ -81,7 +81,7 @@ function verifyPassword(password, record) {
 }
 function defaultData(){
   const p=makePassword(process.env.ADMIN_PASSWORD || 'MSC-ADMIN-2026');
-  return {version:8, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', loginId:process.env.ADMIN_LOGIN_ID || 'MSCADMIN', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:'',whatsappUrl:'',iconStyle:'circle'}, siteSettings:{demoVideoUrl:'',loaderDuration:4500}, emailSettings:{host:'',port:465,secure:true,user:'',pass:'',to:'mscinterior1@gmail.com',from:''}, leads:[], whatsappMessages:[]};
+  return {version:8, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', loginId:process.env.ADMIN_LOGIN_ID || 'MSCADMIN', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:'',whatsappUrl:'',iconStyle:'circle'}, siteSettings:{demoVideoUrl:'',loaderDuration:4500}, emailSettings:{host:'',port:465,secure:true,user:'',pass:'',to:'mscinterior1@gmail.com',from:''}, leads:[]};
 }
 function readData(){
   try { if(!fs.existsSync(DATA_FILE)){const d=defaultData();fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2));return d;} return JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }
@@ -101,7 +101,6 @@ function migrateAdminPassword(data){
 }
 
 let data=readData();
-if(!Array.isArray(data.whatsappMessages)) data.whatsappMessages=[];
 migrateAdminPassword(data);
 if(!data.admin.loginId) { data.admin.loginId=process.env.ADMIN_LOGIN_ID || 'MSCADMIN'; writeData(data); }
 function mergeDefaults(target, defaults){
@@ -129,8 +128,7 @@ function setSession(res){ const token=crypto.randomBytes(32).toString('hex'); se
 function clearSession(req,res){ const token=sessionCookie(req); if(token) sessions.delete(token); res.setHeader('Set-Cookie','msc_admin_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0'); }
 
 function send(res,status,body,type='application/json'){ res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store'}); res.end(type.includes('json')?JSON.stringify(body):body); }
-function readRaw(req,maxBytes=2*1024*1024){ return new Promise((resolve,reject)=>{const chunks=[];let size=0;req.on('data',chunk=>{size+=chunk.length;if(size>maxBytes){reject(new Error('Payload too large'));req.destroy();return;}chunks.push(chunk);});req.on('end',()=>resolve(Buffer.concat(chunks)));req.on('error',reject);}); }
-function readJson(req,maxBytes=150000){ return readRaw(req,maxBytes).then(raw=>JSON.parse(raw.toString('utf8')||'{}')); }
+function readJson(req,maxBytes=150000){ return new Promise((resolve,reject)=>{let data='';req.on('data',c=>{data+=c;if(data.length>maxBytes){reject(new Error('Payload too large'));req.destroy();}});req.on('end',()=>{try{resolve(JSON.parse(data||'{}'));}catch(e){reject(e);}});req.on('error',reject);}); }
 function safeFileName(name){ const ext=path.extname(name||'').toLowerCase(); const base=path.basename(name||'media',ext).replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,60)||'media'; return `${Date.now()}-${Math.random().toString(36).slice(2,9)}-${base}${ext}`; }
 function isAllowedMedia(name,mime){ const ext=path.extname(name||'').toLowerCase(); return ['.mp4','.webm','.mov','.jpg','.jpeg','.png','.webp'].includes(ext) && /^(video|image)\//.test(mime||''); }
 
@@ -154,127 +152,19 @@ async function sendEmail(lead){
 
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-function normalizeWhatsAppRecipients(raw, defaults=['+917093328871','+919347498256']){
-  return String(raw || defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.replace(/^whatsapp:/i,''));
-}
-function verifyMetaWebhookSignature(rawBody, signature){
-  const appSecret=process.env.META_APP_SECRET;
-  if(!appSecret || !signature || !String(signature).startsWith('sha256=')) return false;
-  const expected='sha256='+crypto.createHmac('sha256',appSecret).update(rawBody).digest('hex');
-  const a=Buffer.from(expected,'utf8'), b=Buffer.from(String(signature),'utf8');
-  return a.length===b.length && crypto.timingSafeEqual(a,b);
-}
-function saveMetaIncomingMessages(payload){
-  const entries=Array.isArray(payload?.entry)?payload.entry:[];
-  const receivedAt=new Date().toISOString();
-  for(const entry of entries){
-    for(const change of (Array.isArray(entry?.changes)?entry.changes:[])){
-      const value=change?.value || {};
-      const messages=Array.isArray(value.messages)?value.messages:[];
-      for(const msg of messages){
-        let text='';
-        if(msg.type==='text') text=String(msg.text?.body||'');
-        else if(msg.type==='button') text=String(msg.button?.text||'');
-        else if(msg.type==='interactive') text=String(msg.interactive?.button_reply?.title || msg.interactive?.list_reply?.title || '');
-        data.whatsappMessages.unshift({
-          id:String(msg.id||crypto.randomUUID()),
-          from:String(msg.from||''),
-          timestamp:String(msg.timestamp||''),
-          type:String(msg.type||'unknown'),
-          text:text.slice(0,2000),
-          phoneNumberId:String(value.metadata?.phone_number_id||''),
-          receivedAt
-        });
-      }
-    }
-  }
-  data.whatsappMessages=data.whatsappMessages.slice(0,200);
-  if(entries.length) writeData(data);
-}
-async function sendMetaWhatsAppTemplate(body){
-  const accessToken=process.env.META_ACCESS_TOKEN;
-  const phoneNumberId=process.env.META_PHONE_NUMBER_ID;
-  const version=process.env.META_GRAPH_API_VERSION || 'v26.0';
-  const templateName=process.env.META_WHATSAPP_TEMPLATE_NAME;
-  const language=process.env.META_WHATSAPP_TEMPLATE_LANGUAGE || 'en_US';
-  const recipients=normalizeWhatsAppRecipients(process.env.META_WHATSAPP_TO);
-  if(!accessToken || !phoneNumberId || !templateName || !recipients.length){
-    return {configured:false,provider:'meta',reason:'missing_meta_template_configuration'};
-  }
-  const results=await Promise.all(recipients.map(async to=>{
-    const metaTo=String(to).replace(/\D/g,'');
-    const payload={
-      messaging_product:'whatsapp',
-      to:metaTo,
-      type:'template',
-      template:{
-        name:templateName,
-        language:{code:language},
-        components:[{
-          type:'body',
-          parameters:[{type:'text',text:String(body).slice(0,1024)}]
-        }]
-      }
-    };
-    const r=await fetch(`https://graph.facebook.com/${version}/${phoneNumberId}/messages`,{
-      method:'POST',
-      headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-    const result=await r.json().catch(()=>({}));
-    if(!r.ok) throw new Error(result?.error?.message || `Meta Graph HTTP ${r.status}`);
-    return result?.messages?.[0]?.id || true;
-  }));
-  return {configured:true,provider:'meta',sentTo:recipients.length,messageIds:results};
-}
-async function sendTwilioWhatsApp(body){
-  const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
-  const recipients=normalizeWhatsAppRecipients(process.env.OWNER_WHATSAPP_TO);
-  if(String(process.env.TWILIO_ENABLED||'false').toLowerCase()!=='true' || !sid||!token||!from||!recipients.length) return {configured:false,provider:'twilio',disabled:true};
-  const auth=Buffer.from(`${sid}:${token}`).toString('base64');
-  const results=await Promise.all(recipients.map(async to=>{
-    const params=new URLSearchParams({From:from,To:`whatsapp:${to}`,Body:body});
-    const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});
-    if(!r.ok) throw new Error(await r.text());
-    return true;
-  }));
-  return {configured:true,provider:'twilio',sentTo:results.length};
-}
 async function sendWhatsApp(body){
-  const metaConfigured=!!(process.env.META_ACCESS_TOKEN && process.env.META_PHONE_NUMBER_ID && process.env.META_WHATSAPP_TEMPLATE_NAME);
-  if(metaConfigured) return sendMetaWhatsAppTemplate(body);
-  return sendTwilioWhatsApp(body);
+  const sid=process.env.TWILIO_ACCOUNT_SID, token=process.env.TWILIO_AUTH_TOKEN, from=process.env.TWILIO_WHATSAPP_FROM;
+  const defaults=['whatsapp:+917093328871','whatsapp:+919347498256'];
+  const recipients=(process.env.OWNER_WHATSAPP_TO || defaults.join(',')).split(',').map(v=>v.trim()).filter(Boolean).map(v=>v.startsWith('whatsapp:')?v:`whatsapp:+${v.replace(/^\+/,'')}`);
+  if(String(process.env.TWILIO_ENABLED||'false').toLowerCase()!=='true' || !sid||!token||!from||!recipients.length) return {configured:false,disabled:true};
+  const auth=Buffer.from(`${sid}:${token}`).toString('base64');
+  const results=await Promise.all(recipients.map(async to=>{const params=new URLSearchParams({From:from,To:to,Body:body});const r=await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,{method:'POST',headers:{Authorization:`Basic ${auth}`,'Content-Type':'application/x-www-form-urlencoded'},body:params});if(!r.ok) throw new Error(await r.text());return true;}));
+  return {configured:true,sentTo:results.length};
 }
-
 function leadMessage(lead){return ['🔔 New MSC website enquiry',`Source: ${lead.source||'Website'}`,`Name: ${lead.name||'-'}`,`Phone: ${lead.phone||'-'}`,lead.email?`Email: ${lead.email}`:null,lead.bhk?`BHK: ${lead.bhk}`:null,lead.property?`Property: ${lead.property}`:null,lead.city?`City: ${lead.city}`:null,lead.area?`Area: ${lead.area} sq.ft.`:null,lead.scope?`Scope: ${lead.scope}`:null,lead.finish?`Finish: ${lead.finish}`:null,lead.start?`Start: ${lead.start}`:null,lead.estimate?`Estimate: ${lead.estimate}`:null,lead.project?`Project type: ${lead.project}`:null,lead.message?`Message: ${lead.message}`:null,lead.photoCount!=null?`Photos uploaded: ${lead.photoCount}`:null,`Received: ${new Date().toLocaleString('en-IN')}`].filter(Boolean).join('\n');}
 
 const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
-
-  // Meta WhatsApp Cloud API webhook
-  // GET is the one-time verification handshake; POST receives signed events.
-  if(req.method==='GET' && url.pathname==='/webhook'){
-    const mode=url.searchParams.get('hub.mode');
-    const token=url.searchParams.get('hub.verify_token');
-    const challenge=url.searchParams.get('hub.challenge');
-    const expected=process.env.META_WEBHOOK_VERIFY_TOKEN;
-    if(mode==='subscribe' && expected && token===expected && challenge) return send(res,200,challenge,'text/plain; charset=utf-8');
-    return send(res,403,'Forbidden','text/plain; charset=utf-8');
-  }
-  if(req.method==='POST' && url.pathname==='/webhook'){
-    try{
-      const rawBody=await readRaw(req,2*1024*1024);
-      if(!verifyMetaWebhookSignature(rawBody,req.headers['x-hub-signature-256'])) return send(res,403,{ok:false,error:'Invalid webhook signature.'});
-      const payload=JSON.parse(rawBody.toString('utf8')||'{}');
-      saveMetaIncomingMessages(payload);
-      console.log('[Meta WhatsApp webhook]',JSON.stringify(payload));
-      return send(res,200,{ok:true});
-    }catch(e){
-      console.error('Meta WhatsApp webhook failed:',e.message);
-      return send(res,400,{ok:false,error:'Invalid webhook payload.'});
-    }
-  }
-
   // Auth
   if(req.method==='POST' && url.pathname==='/api/admin/login'){
     try{const b=await readJson(req,20000);if(String(b.loginId||'').trim().toLowerCase() !== String(data.admin.loginId||'MSCADMIN').trim().toLowerCase() || !verifyPassword(String(b.password||''),data.admin)) return send(res,401,{ok:false,error:'Incorrect password.'});setSession(res);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Invalid login request.'});}

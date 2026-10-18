@@ -21,14 +21,13 @@
     <nav class="desktop-nav" aria-label="Primary navigation">
       <a href="#home">Home</a>
       <a href="#services">Services</a>
-      <a href="#wall-print-estimator">Wall Print Cost</a>
       <a href="#projects">Projects</a>
       <a href="#about">About</a>
       <a href="#process">Process</a>
       <a href="#contact">Contact</a>
     </nav>
 
-    <div class="header-actions"><a class="header-wallprint" href="#wall-print-estimator">Digital Wall Art Cost <span>↗</span></a><a class="header-quote" href="#estimate" data-open-estimate>Interior Cost Estimate <span>↗</span></a><a class="header-cta" href="#contact">Book a Consultation <span>↗</span></a></div>
+    <div class="header-actions"><a class="header-quote" href="#estimate" id="headerWallArt" data-open-wall-art>Digital Wall Art Cost <span>↗</span></a><a class="header-quote" href="#estimate" data-open-estimate>Get Estimate Quotation <span>↗</span></a><a class="header-cta" href="#contact">Book a Consultation <span>↗</span></a></div>
     <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
   </header>
 
@@ -99,28 +98,12 @@
           <p>Transform an existing space with a fresh palette, lighting, finishes, furniture and artful styling.</p>
           <a href="#contact">Explore service <span>↗</span></a>
         </article>
-      </div>
-    </section>
-
-    <section class="wall-print-estimator section-pad" id="wall-print-estimator">
-      <div class="wall-print-layout">
-        <div class="wall-print-intro">
-          <div class="section-label">03 — DIGITAL WALL PRINT</div>
-          <h2>Estimate your<br><em>wall print cost.</em></h2>
-          <p>Enter the wall dimensions to get an approximate digital wall printing cost. Our indicative rate is ₹200 per sq.ft.</p>
-          <p class="wall-print-disclaimer">Final pricing may vary based on wall condition, design, preparation and site measurements.</p>
-        </div>
-        <div class="wall-print-card">
-          <div class="wall-print-fields">
-            <label for="wallPrintWidth">Wall width (ft)<input id="wallPrintWidth" type="number" min="0" step="0.1" placeholder="e.g. 12" inputmode="decimal"></label>
-            <label for="wallPrintHeight">Wall height (ft)<input id="wallPrintHeight" type="number" min="0" step="0.1" placeholder="e.g. 10" inputmode="decimal"></label>
-          </div>
-          <div class="wall-print-result" aria-live="polite">
-            <div><span>ESTIMATED WALL AREA</span><strong id="wallPrintArea">0 sq.ft.</strong></div>
-            <div><span>APPROXIMATE COST</span><strong id="wallPrintCost">₹0</strong></div>
-          </div>
-          <a class="btn btn-gold wall-print-cta" href="#contact">Request a wall print quote <span>↗</span></a>
-        </div>
+        <article class="service-card">
+          <div class="service-number">05</div>
+          <h3>Digital Wall Art</h3>
+          <p>Custom digital wall printing that brings statement artwork, textures and distinctive finishes to your space.</p>
+          <a href="#estimate" data-open-wall-art>Explore service <span>↗</span></a>
+        </article>
       </div>
     </section>
 
@@ -214,7 +197,7 @@
         <div><div class="section-label">06 — MSC IN MOTION</div><h2>See our work<br><em>come to life.</em></h2></div>
         <p>A short look at the craft, materials and finished spaces behind MSC projects.</p>
       </div>
-      <div class="demo-video-shell" id="demoVideoShell"><div class="demo-video-placeholder" id="demoVideoPlaceholder"><span>MSC</span><p>Work video can be added from the Admin Panel.</p></div></div>
+      <div class="demo-video-shell" id="demoVideoShell"><div class="demo-video-placeholder" id="demoVideoPlaceholder" aria-label="MSC logo"><img src="assets/msc-logo-light.png" alt="MSC — Mansion Space Creative Studio" loading="lazy"></div></div>
     </section>
 
     <section class="estimate-section section-pad" id="estimate">
@@ -235,35 +218,62 @@
     </section>
 
     <div class="estimate-modal" id="estimateModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="estimateTitle">
-      <div class="estimate-modal-panel">
+      <div class="estimate-modal-panel choosing-estimate">
         <button class="estimate-close" id="estimateClose" type="button" aria-label="Close estimate quotation">×</button>
+        <section class="estimate-choice-screen" id="estimateChoiceScreen">
+          <div class="estimate-brand-row">
+            <img src="assets/msc-logo-light.png" alt="MSC logo">
+            <div><strong>MSC</strong><small>Mansion Space Creative Studio</small></div>
+          </div>
+          <p class="wizard-kicker">ESTIMATE QUOTATION</p>
+          <h3>What would you like to estimate?</h3>
+          <p class="wizard-subtitle">Choose a service to get started.</p>
+          <div class="estimate-service-options">
+            <button class="estimate-service-option" id="chooseWallArt" type="button">
+              <span class="estimate-service-icon" aria-hidden="true">✦</span>
+              <strong>Digital Wall Art</strong>
+              <small>Estimate wall-printing cost by wall dimensions.</small>
+              <span class="estimate-service-arrow">↗</span>
+            </button>
+            <button class="estimate-service-option" id="chooseInterior" type="button">
+              <span class="estimate-service-icon" aria-hidden="true">⌂</span>
+              <strong>Interior Work</strong>
+              <small>Get an indicative estimate for your interior project.</small>
+              <span class="estimate-service-arrow">↗</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="wall-art-estimator" id="wallArtEstimator" aria-hidden="true">
+          <div class="estimate-brand-row">
+            <img src="assets/msc-logo-light.png" alt="MSC logo">
+            <div><strong>MSC</strong><small>Mansion Space Creative Studio</small></div>
+            <span class="step-count">DIGITAL WALL ART</span>
+          </div>
+          <p class="wizard-kicker">WALL PRINT ESTIMATE</p>
+          <h3>Estimate your wall art cost</h3>
+          <p class="wizard-subtitle">Enter your wall dimensions for an approximate quote.</p>
+          <div class="wall-art-fields">
+            <label for="wallWidth">Wall width (ft)<input id="wallWidth" type="number" min="0.1" step="0.1" placeholder="e.g. 12"></label>
+            <label for="wallHeight">Wall height (ft)<input id="wallHeight" type="number" min="0.1" step="0.1" placeholder="e.g. 10"></label>
+          </div>
+          <div class="wall-art-results">
+            <div><span>ESTIMATED WALL AREA</span><strong id="wallArea">0 sq.ft.</strong></div>
+            <div><span>APPROXIMATE COST</span><strong id="wallCost">₹0</strong></div>
+          </div>
+          <div class="wall-art-actions">
+            <button class="btn btn-gold" id="requestWallQuote" type="button">Request a Wall Print Quote <span>↗</span></button>
+            <button class="wall-art-back" id="wallArtBack" type="button">← Back to estimate options</button>
+          </div>
+        </section>
+
         <div class="estimate-brand-row">
           <img src="assets/msc-logo-light.png" alt="MSC logo">
           <div><strong>MSC</strong><small>Mansion Space Creative Studio</small></div>
           <span class="step-count" id="stepCount">1 / 4</span>
         </div>
 
-        <div class="estimate-chooser" id="estimateChooser">
-          <p class="wizard-kicker">ESTIMATE QUOTATION</p>
-          <h3>What would you like to estimate?</h3>
-          <p class="wizard-subtitle">Choose the type of work to get a tailored cost estimate.</p>
-          <div class="estimate-type-options">
-            <button class="estimate-type-card" id="chooseWallArt" type="button">
-              <span class="estimate-type-icon" aria-hidden="true">▧</span>
-              <strong>Digital Wall Art</strong>
-              <small>Estimate wall printing based on width and height · ₹200/sq.ft.</small>
-              <span class="estimate-type-arrow" aria-hidden="true">↗</span>
-            </button>
-            <button class="estimate-type-card" id="chooseInterior" type="button">
-              <span class="estimate-type-icon" aria-hidden="true">⌂</span>
-              <strong>Interior Work</strong>
-              <small>Estimate your home or commercial interior project.</small>
-              <span class="estimate-type-arrow" aria-hidden="true">↗</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="estimate-progress" id="estimateProgress" aria-hidden="true">
+        <div class="estimate-progress" aria-hidden="true">
           <span class="progress-dot active"></span><span class="progress-line"></span>
           <span class="progress-dot"></span><span class="progress-line"></span>
           <span class="progress-dot"></span><span class="progress-line"></span>
@@ -296,9 +306,9 @@
           <div class="wizard-field">
             <label for="finishSelect">Finish level</label>
             <select id="finishSelect">
-              <option value="Essential" data-rate="1000">Essential · ₹1,000/sq.ft.</option>
-              <option value="Premium" data-rate="1000" selected>Premium · ₹1,000/sq.ft.</option>
-              <option value="Luxury" data-rate="1000">Luxury · ₹1,000/sq.ft.</option>
+              <option value="Essential" data-rate="1000">Essential</option>
+              <option value="Premium" data-rate="1000" selected>Premium</option>
+              <option value="Luxury" data-rate="1000">Luxury</option>
             </select>
           </div>
         </div>
@@ -342,7 +352,7 @@
           <button class="btn btn-gold wizard-next" id="estimateNext" type="button">Next <span>→</span></button>
         </div>
         <button class="estimate-whatsapp-final" id="estimateWhatsApp" type="button">Send estimate request <span>↗</span></button>
-        <p class="wizard-note" id="estimateNote">Estimate basis: ₹1,000 per sq.ft. Final pricing can vary after site measurement and detailed scope confirmation.</p>
+        <p class="wizard-note" id="estimateNote">Final pricing may vary after site measurement and detailed scope confirmation.</p>
 
         <section class="estimate-thankyou" id="estimateThankyou" aria-live="polite" aria-hidden="true">
           <div class="thankyou-confetti" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>•</span><span>✧</span><span>•</span></div>
@@ -383,57 +393,34 @@
     </section>
   </main>
 
-  <footer class="site-footer premium-footer">
-    <div class="footer-ornament footer-ornament-left" aria-hidden="true"></div>
-    <div class="footer-ornament footer-ornament-right" aria-hidden="true"></div>
+  <footer class="site-footer">
     <div class="footer-top">
-      <div class="footer-brand">
-        <img src="assets/msc-logo-light.png" alt="MSC logo">
-        <p>MAISON • SPACE • CREATIVE</p>
-        <span class="footer-brand-line"></span>
-        <small>SPACES THAT INSPIRE</small>
-      </div>
-      <nav class="footer-nav" aria-label="Footer navigation">
-        <a href="#services">Services</a><a href="#projects">Projects</a><a href="#about">About</a><a href="#contact">Contact</a>
-      </nav>
-      <div class="footer-contact">
-        <span>Start a conversation</span>
-        <a class="footer-consultation" href="#contact">Book a consultation <b>↗</b></a>
-        <p>Let's bring your vision to life. We'd love to hear about your project.</p>
+      <div class="footer-brand"><img src="assets/msc-logo-light.png" alt="MSC logo"><p>MAISON • SPACE • CREATIVE</p></div>
+      <div class="footer-nav"><a href="#services">Services</a><a href="#projects">Projects</a><a href="#about">About</a><a href="#contact">Contact</a></div>
+      <div class="footer-contact"><span>Start a conversation</span><a href="#contact">Book a consultation ↗</a>
+        <div class="social-links" aria-label="MSC social media">
+          <a id="socialInstagram" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Instagram</a>
+          <a id="socialFacebook" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Facebook</a>
+          <a id="socialYoutube" href="#" target="_blank" rel="noopener" class="social-link hidden-social">YouTube</a>
+          <a id="socialPinterest" href="#" target="_blank" rel="noopener" class="social-link hidden-social">Pinterest</a>
+          <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" class="social-link hidden-social">WhatsApp</a>
+        </div>
       </div>
     </div>
-    <div class="footer-social-bar">
-      <div class="footer-social-group" aria-label="Follow MSC on social media">
-        <a id="socialInstagram" href="#" target="_blank" rel="noopener" class="social-link" aria-label="Instagram"><span>◎</span></a>
-        <a id="socialFacebook" href="#" target="_blank" rel="noopener" class="social-link" aria-label="Facebook"><span>f</span></a>
-        <a id="socialYoutube" href="#" target="_blank" rel="noopener" class="social-link" aria-label="YouTube"><span>▶</span></a>
-        <a id="socialPinterest" href="#" target="_blank" rel="noopener" class="social-link" aria-label="Pinterest"><span>P</span></a>
-        <a id="socialWhatsapp" href="#" target="_blank" rel="noopener" class="social-link" aria-label="WhatsApp"><span>WA</span></a>
-      </div>
-      <div class="footer-follow">
-        <strong>Follow us</strong>
-        <span>FOR LATEST PROJECTS &amp; UPDATES</span>
-      </div>
-      <div class="footer-copy"><span>© <span id="year"></span> MSC Mansion Space Creative Studio.</span><small>ALL RIGHTS RESERVED.</small></div>
-      <form class="footer-newsletter" id="footerNewsletter">
-        <label class="sr-only" for="footerEmail">Your email address</label>
-        <span aria-hidden="true">✉</span>
-        <input id="footerEmail" type="email" placeholder="Your email address" required>
-        <button type="submit" aria-label="Subscribe">→</button>
-      </form>
-    </div>
-    <div class="footer-bottom"><span>Designed for spaces with soul.</span><span>MSC • Hyderabad</span></div>
+    <div class="footer-bottom"><span>© MSC Mansion Space Creative Studio.</span><span>Designed for spaces with soul.</span></div>
   </footer>
 
-  <div class="floating-socials premium-floating-socials" id="floatingSocials" aria-label="MSC social media quick links">
-    <div class="floating-social-label">FOLLOW MSC</div>
-    <a id="floatInstagram" class="float-social" target="_blank" rel="noopener" aria-label="Instagram"><span>◎</span><em>Instagram</em></a>
-    <a id="floatFacebook" class="float-social" target="_blank" rel="noopener" aria-label="Facebook"><span>f</span><em>Facebook</em></a>
-    <a id="floatYoutube" class="float-social" target="_blank" rel="noopener" aria-label="YouTube"><span>▶</span><em>YouTube</em></a>
-    <a id="floatPinterest" class="float-social" target="_blank" rel="noopener" aria-label="Pinterest"><span>P</span><em>Pinterest</em></a>
-    <a id="floatWhatsapp" class="float-social whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><span>WA</span><em>WhatsApp</em></a>
+  <div class="service-detail-modal" id="serviceDetailModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="serviceDetailTitle">
+    <div class="service-detail-panel"><button class="service-detail-close" id="serviceDetailClose" type="button" aria-label="Close service details">×</button><div class="section-label" id="serviceDetailKicker">MSC SERVICE</div><h2 id="serviceDetailTitle">Service details</h2><p id="serviceDetailDescription"></p><div class="service-detail-options" id="serviceDetailOptions"></div><a class="btn btn-gold service-detail-cta" id="serviceDetailCTA" href="#contact">Discuss this service ↗</a></div>
   </div>
   <div class="toast" id="toast">Thank you — your consultation request is ready to be connected.</div>
+  <div class="floating-socials" id="floatingSocials" aria-label="Social media quick links" hidden>
+    <a id="floatInstagram" class="float-social hidden-social" target="_blank" rel="noopener noreferrer" aria-label="Instagram" title="Instagram">IG</a>
+    <a id="floatFacebook" class="float-social hidden-social" target="_blank" rel="noopener noreferrer" aria-label="Facebook" title="Facebook">f</a>
+    <a id="floatYoutube" class="float-social hidden-social" target="_blank" rel="noopener noreferrer" aria-label="YouTube" title="YouTube">▶</a>
+    <a id="floatPinterest" class="float-social hidden-social" target="_blank" rel="noopener noreferrer" aria-label="Pinterest" title="Pinterest">P</a>
+    <a id="floatWhatsapp" class="float-social whatsapp hidden-social" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" title="WhatsApp">WA</a>
+  </div>
   <button class="back-top" id="backTop" aria-label="Back to top">↑</button>
   <script src="script.js"></script>
 </body>

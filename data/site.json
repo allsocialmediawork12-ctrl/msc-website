@@ -145,7 +145,8 @@
         "Choose your interiors",
         "Add area & location",
         "Upload photos & get estimate"
-      ]
+      ],
+      "wallPrintRate": 200
     },
     "contact": {
       "label": "07 — LET'S CREATE",
@@ -222,6 +223,5 @@
     "pass": "",
     "to": "mscinterior1@gmail.com",
     "from": ""
-  },
-  "whatsappMessages": []
+  }
 }
