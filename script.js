@@ -8,7 +8,7 @@ const year = document.getElementById('year');
 
 // Intro loader removed so the homepage appears immediately.
 if (loader) loader.remove();
-year.textContent = new Date().getFullYear();
+if (year) year.textContent = new Date().getFullYear();
 
 window.addEventListener('scroll', () => {
   const scrolled = window.scrollY > 40;
@@ -264,7 +264,8 @@ function updateWizard() {
   steps.forEach(step => step.classList.toggle('active', Number(step.dataset.step) === currentStep));
   stepCount.textContent = `${currentStep} / 4`;
   progressDots.forEach((dot, i) => { dot.classList.toggle('active', i === currentStep - 1); dot.classList.toggle('done', i < currentStep - 1); });
-  backBtn.disabled = currentStep === 1;
+  backBtn.disabled = false;
+  backBtn.textContent = currentStep === 1 ? '← Back to options' : 'Back';
   nextBtn.innerHTML = currentStep === 4 ? 'Get Estimate <span>↗</span>' : 'Next <span>→</span>';
   whatsappBtn.classList.toggle('show', currentStep === 4 && estimateResultCard.classList.contains('ready'));
   if (currentStep === 4 && selected.area) calculateEstimate();
@@ -343,7 +344,18 @@ thankyouClose.addEventListener('click', () => {
 });
 
 backBtn.addEventListener('click', () => {
-  if (currentStep > 1) { currentStep--; updateWizard(); }
+  if (currentStep > 1) {
+    currentStep--;
+    updateWizard();
+    return;
+  }
+  // On the first interior step, return to the service chooser.
+  estimateChoiceScreen.style.display = '';
+  estimateChoiceScreen.setAttribute('aria-hidden', 'false');
+  wallArtEstimator.style.display = 'none';
+  wallArtEstimator.setAttribute('aria-hidden', 'true');
+  modal.classList.remove('wall-art-mode');
+  modal.classList.add('choosing-estimate');
 });
 
 async function submitLead(source='estimate') {
