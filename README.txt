@@ -134,3 +134,31 @@ Keep RESEND_API_KEY private. Do not commit it to GitHub or paste it into the web
 For production sender branding, verify your own domain in Resend and set RESEND_FROM to an address on that verified domain. Resend documents Node.js/Express email sending at https://resend.com/nodejs and https://resend.com/express.
 
 The website continues to save every enquiry to data/site.json even if email is temporarily unavailable. WhatsApp is disabled by default to prevent invalid Twilio credentials from generating repeated notification errors.
+
+
+RENDER SECURITY UPDATE — OCTOBER 2026
+-------------------------------------
+This build pins the Node.js runtime to 24.22.1 using .node-version and the
+package.json engines field. Redeploy the service so Render installs the patched
+runtime and refreshes the native runtime's system certificate store.
+
+Before deploying, set a strong ADMIN_PASSWORD in Render > your service >
+Environment. If an existing data/site.json is present, setting ADMIN_PASSWORD
+will rotate the admin password once when the updated server starts. If you do
+not set ADMIN_PASSWORD on an existing installation, the existing admin password
+hash is preserved.
+
+The source no longer embeds a fixed admin migration password. On a brand-new
+production installation, ADMIN_PASSWORD is required before the server starts.
+
+After deployment, verify the Node.js version in the logs and test the public
+website, admin login, uploads, and enquiry forms. Keep all secrets in Render
+Environment variables; never commit them to the repository.
+
+RENDER REPOSITORY ROOT
+----------------------
+If you upload the contents of the msc_equal folder directly to the root of your
+GitHub repository, use that repository root as Render's Root Directory.
+If you upload the entire ZIP and keep the msc_equal folder nested in the
+repository, set Render's Root Directory to msc_equal so Render finds server.js,
+package.json, and .node-version.

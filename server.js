@@ -17,9 +17,8 @@ const DATA_FILE = path.join(DATA_DIR, 'site.json');
 
 // OpenAI configuration is server-side only. The deployment environment should
 
-// One-time migration for the live Render data store.
-const ADMIN_PASSWORD_MIGRATION_VERSION = 2;
-const FORCED_ADMIN_PASSWORD = 'MSC@Admin2026!';
+// Password migration: never reset accounts to a password embedded in source code.
+const ADMIN_PASSWORD_MIGRATION_VERSION = 3;
 const MIME = {
   '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.css':'text/css; charset=utf-8',
   '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.webp':'image/webp', '.svg':'image/svg+xml',
@@ -80,7 +79,12 @@ function verifyPassword(password, record) {
   } catch { return false; }
 }
 function defaultData(){
-  const p=makePassword(process.env.ADMIN_PASSWORD || 'MSC-ADMIN-2026');
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+  if (process.env.NODE_ENV === 'production' && !configuredPassword) {
+    throw new Error('Set ADMIN_PASSWORD in the production environment before first startup.');
+  }
+  const initialPassword = configuredPassword || crypto.randomBytes(32).toString('base64url');
+  const p=makePassword(initialPassword);
   return {version:8, admin:{name:process.env.ADMIN_NAME || 'MSC Admin', loginId:process.env.ADMIN_LOGIN_ID || 'MSCADMIN', ...p}, content:DEFAULT_CONTENT, projects:SAMPLE_PROJECTS, laminates:[], socials:{instagramUrl:'',facebookUrl:'',youtubeUrl:'',pinterestUrl:'',whatsappUrl:'',iconStyle:'circle'}, siteSettings:{demoVideoUrl:'',loaderDuration:4500}, emailSettings:{host:'',port:465,secure:true,user:'',pass:'',to:'mscinterior1@gmail.com',from:''}, leads:[]};
 }
 function readData(){
@@ -91,10 +95,16 @@ function writeData(d){ fs.writeFileSync(DATA_FILE,JSON.stringify(d,null,2),'utf8
 function migrateAdminPassword(data){
   if(!data.admin) data.admin={};
   if(data.admin.passwordResetVersion===ADMIN_PASSWORD_MIGRATION_VERSION) return false;
-  const p=makePassword(FORCED_ADMIN_PASSWORD);
+
+  // Only rotate an existing admin password when the owner explicitly configures
+  // ADMIN_PASSWORD in Render. Otherwise preserve the existing password hash.
+  const configuredPassword = process.env.ADMIN_PASSWORD;
+  if (!configuredPassword) return false;
+
+  const p=makePassword(configuredPassword);
   data.admin.salt=p.salt;
   data.admin.hash=p.hash;
-  data.admin.loginId=process.env.ADMIN_LOGIN_ID || 'MSCADMIN';
+  data.admin.loginId=process.env.ADMIN_LOGIN_ID || data.admin.loginId || 'MSCADMIN';
   data.admin.passwordResetVersion=ADMIN_PASSWORD_MIGRATION_VERSION;
   writeData(data);
   return true;
