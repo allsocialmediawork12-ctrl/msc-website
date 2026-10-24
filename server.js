@@ -175,6 +175,12 @@ function leadMessage(lead){return ['🔔 New MSC website enquiry',`Source: ${lea
 
 const server=http.createServer(async(req,res)=>{
   const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);
+  // Serve the existing admin page from the legacy URL and the shorter /admin alias.
+  if(req.method==='GET' && ['/ADMINHTML','/ADMINHTML/','/admin','/admin/'].includes(url.pathname)){
+    const adminPath=path.join(ROOT,'admin.html');
+    try{res.writeHead(200,{'Content-Type':MIME['.html']});return fs.createReadStream(adminPath).pipe(res);}
+    catch(e){return send(res,500,{ok:false,error:'Admin page unavailable'});}
+  }
   // Auth
   if(req.method==='POST' && url.pathname==='/api/admin/login'){
     try{const b=await readJson(req,20000);if(String(b.loginId||'').trim().toLowerCase() !== String(data.admin.loginId||'MSCADMIN').trim().toLowerCase() || !verifyPassword(String(b.password||''),data.admin)) return send(res,401,{ok:false,error:'Incorrect password.'});setSession(res);return send(res,200,{ok:true,name:data.admin.name});}catch(e){return send(res,400,{ok:false,error:'Invalid login request.'});}
