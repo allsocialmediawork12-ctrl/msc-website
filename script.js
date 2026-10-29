@@ -430,7 +430,8 @@ document.head.appendChild(revealStyle);
     if(projects && Array.isArray(projects)){
       const grid=document.querySelector('.project-grid');
       if(grid){
-        grid.innerHTML=projects.map(p=>{ const media=p.videoUrl ? `<div class=\"project-video-wrap\"><video src=\"${p.videoUrl}\" controls muted playsinline preload=\"metadata\"></video><span class=\"video-badge\">MSC FILM</span></div>` : `<img src=\"${p.image}\" alt=\"${String(p.title).replace(/\"/g,'&quot;')}\" loading=\"lazy\">`; return `<article class=\"project-card ${p.id===projects[0]?.id?'tall':''}\" data-category=\"${String(p.category).replace(/[^a-z]/gi,'')}\">${media}<div class=\"project-info\"><span>${p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential'}</span><h3>${String(p.title).replace(/[<>]/g,'')}</h3><p>${String(p.location).replace(/[<>]/g,'')}</p>${p.description?`<small>${String(p.description).replace(/[<>]/g,'')}</small>`:''}</div></article>`; }).join('');
+        grid.innerHTML=projects.map(p=>{ const galleryPhotos=Array.isArray(p.images)&&p.images.length?p.images:(p.image?[p.image]:[]); const photos=[p.image,...galleryPhotos.filter(src=>src&&src!==p.image)].filter(Boolean); const media=p.videoUrl ? `<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>` : `<div class="project-gallery">${photos.map((src,j)=>`<img class="project-gallery-image ${j===0?'active':''}" src="${esc(src)}" alt="${esc(p.title)}${photos.length>1?' — photo '+(j+1):''}" loading="lazy" data-photo-index="${j}">`).join('')}${photos.length>1?`<div class="project-gallery-controls" aria-label="Browse ${esc(p.title)} photos">${photos.map((src,j)=>`<button type="button" class="project-gallery-dot ${j===0?'active':''}" data-photo-index="${j}" aria-label="Show photo ${j+1}" aria-pressed="${j===0?'true':'false'}"></button>`).join('')}</div>`:''}</div>`; return `<article class="project-card ${p.id===projects[0]?.id?'tall':''}" data-category="${String(p.category).replace(/[^a-z]/gi,'')}">${media}<div class="project-info"><span>${p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential'}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`; }).join('');
+        grid.querySelectorAll('.project-card').forEach(card=>{const images=card.querySelectorAll('.project-gallery-image');const dots=card.querySelectorAll('.project-gallery-dot');dots.forEach(dot=>dot.addEventListener('click',()=>{const index=Number(dot.dataset.photoIndex);images.forEach((img,j)=>img.classList.toggle('active',j===index));dots.forEach((d,j)=>{d.classList.toggle('active',j===index);d.setAttribute('aria-pressed',j===index?'true':'false');});}));});
         const newCards=grid.querySelectorAll('.project-card');
         document.querySelectorAll('.filter').forEach(filter=>filter.onclick=()=>{document.querySelectorAll('.filter').forEach(b=>b.classList.remove('active'));filter.classList.add('active');newCards.forEach(c=>c.style.display=filter.dataset.filter==='all'||c.dataset.filter===filter.dataset.filter?'':'none');});
       }
@@ -438,6 +439,34 @@ document.head.appendChild(revealStyle);
   } catch(e){ console.warn('MSC owner changes could not be applied',e); }
 })();
 
+
+// Project detail lightbox: shows all photos uploaded for a project in the Admin Panel.
+function openProjectGallery(project){
+  const safe=(v='')=>String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const photos=Array.isArray(project.images)&&project.images.length?project.images.filter(Boolean):(project.image?[project.image]:[]);
+  if(!photos.length)return;
+  let current=0;
+  let modal=document.getElementById('projectDetailModal');
+  if(!modal){modal=document.createElement('div');modal.id='projectDetailModal';modal.className='project-detail-modal';modal.innerHTML=`<section class="project-detail-panel" role="dialog" aria-modal="true" aria-label="Project photos"><button type="button" class="project-detail-close" aria-label="Close project details">×</button><div class="project-detail-copy"><span class="project-detail-kicker"></span><h2></h2><p class="project-detail-location"></p><p class="project-detail-description"></p></div><div class="project-detail-viewer"><button type="button" class="project-detail-arrow prev" aria-label="Previous photo">‹</button><img class="project-detail-main-image" alt=""><button type="button" class="project-detail-arrow next" aria-label="Next photo">›</button><span class="project-detail-count"></span></div><div class="project-detail-thumbs" aria-label="Project photo thumbnails"></div></section>`;document.body.appendChild(modal);
+    modal.querySelector('.project-detail-close').addEventListener('click',closeProjectGallery);
+    modal.addEventListener('click',e=>{if(e.target===modal)closeProjectGallery();});
+    modal.querySelector('.prev').addEventListener('click',()=>show(current-1));
+    modal.querySelector('.next').addEventListener('click',()=>show(current+1));
+  }
+  const title=modal.querySelector('.project-detail-copy h2');
+  const category=String(project.category||'Residential');
+  modal.querySelector('.project-detail-kicker').textContent=category.charAt(0).toUpperCase()+category.slice(1)+' · PROJECT GALLERY';
+  title.textContent=project.title||'Project gallery';
+  modal.querySelector('.project-detail-location').textContent=project.location||'';
+  modal.querySelector('.project-detail-description').textContent=project.description||'';
+  const thumbs=modal.querySelector('.project-detail-thumbs');
+  thumbs.innerHTML=photos.map((src,i)=>`<button type="button" class="project-detail-thumb ${i===0?'active':''}" data-index="${i}" aria-label="Show photo ${i+1}"><img src="${safe(src)}" alt="${safe(project.title||'Project')} photo ${i+1}"></button>`).join('');
+  thumbs.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>show(Number(btn.dataset.index))));
+  function show(index){current=(index+photos.length)%photos.length;const img=modal.querySelector('.project-detail-main-image');img.src=photos[current];img.alt=`${project.title||'Project'} — photo ${current+1} of ${photos.length}`;modal.querySelector('.project-detail-count').textContent=`${current+1} / ${photos.length}`;thumbs.querySelectorAll('button').forEach((btn,i)=>btn.classList.toggle('active',i===current));modal.querySelector('.prev').hidden=photos.length<2;modal.querySelector('.next').hidden=photos.length<2;thumbs.hidden=photos.length<2;}
+  show(0);modal.classList.add('open');document.body.classList.add('project-detail-open');modal.querySelector('.project-detail-close').focus();
+  if(!modal.dataset.keyboardBound){modal.dataset.keyboardBound='1';document.addEventListener('keydown',e=>{const active=document.getElementById('projectDetailModal');if(!active?.classList.contains('open'))return;if(e.key==='Escape')closeProjectGallery();if(e.key==='ArrowLeft')active.querySelector('.prev').click();if(e.key==='ArrowRight')active.querySelector('.next').click();});}
+}
+function closeProjectGallery(){const modal=document.getElementById('projectDetailModal');if(modal)modal.classList.remove('open');document.body.classList.remove('project-detail-open');}
 
 // Live MSC CMS: content, projects and laminate finishes are loaded from the server so every visitor sees admin changes.
 (async function loadMSCLiveCMS(){
@@ -497,10 +526,15 @@ document.head.appendChild(revealStyle);
     setText('#contact .section-label',c.contact?.label); const ch=document.querySelector('#contact h2'); if(ch&&c.contact?.heading){const words=String(c.contact.heading).split(/\s+/);const last=esc(words.pop()||'');ch.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>'; } setText('#contact .consultation-inner > div > p',c.contact?.copy);
     setText('.footer-brand p',c.footer?.tagline); setText('.footer-bottom span:last-child',c.footer?.closing);
 
-    // Projects
+    // Projects: click a project card to open its full photo gallery and project details.
     const grid=document.querySelector('.project-grid'); const projects=projectData.projects||[];
-    if(grid){grid.innerHTML=projects.map((p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`;return `<article class="project-card ${i===0?'tall':''}" data-category="${esc(p.category||'residential')}">${media}<div class="project-info"><span>${esc(p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;}).join('');}
-    const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.filter===filter.dataset.filter?'':'none');});
+    if(grid){grid.innerHTML=projects.map((p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">`;return `<article class="project-card ${i===0?'tall':''}" data-project-index="${i}" data-category="${esc(p.category||'residential')}" tabindex="0" role="button" aria-label="View photos for ${esc(p.title)}"><span class="project-view-hint">VIEW PROJECT ↗</span>${media}<div class="project-info"><span>${esc(p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;}).join('');}
+    const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.category===filter.dataset.filter?'':'none');});
+    freshCards.forEach((card,i)=>{
+      const open=()=>{if(projects[i])openProjectGallery(projects[i]);};
+      card.addEventListener('click',event=>{if(event.target.closest('video,button,a'))return;open();});
+      card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
+    });
 
     // Show only social networks whose URLs are saved in the admin panel.
     const socials=contentData.socials||{};
