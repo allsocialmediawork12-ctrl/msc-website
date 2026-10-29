@@ -56,6 +56,27 @@ function collectContent(){
   Object.assign(c.estimate,{label:$('estimateLabel').value.trim(),heading:$('estimateHeading').value.trim(),copy:$('estimateCopy').value.trim(),rate:Number($('estimateRate').value||1000),wallPrintRate:Number($('wallPrintRate').value||200),highlights:$('estimateHighlights').value.split('\n').map(x=>x.trim()).filter(Boolean)});Object.assign(c.contact,{label:$('contactLabel').value.trim(),heading:$('contactHeading').value.trim(),copy:$('contactCopy').value.trim()});Object.assign(c.laminate,{label:$('laminateLabel').value.trim(),heading:$('laminateHeading').value.trim(),intro:$('laminateIntro').value.trim()});Object.assign(c.footer,{tagline:$('footerTagline').value.trim(),closing:$('footerClosing').value.trim()});return c;
 }
 $('saveContent').onclick=async()=>{try{content=collectContent();await api('/api/content',{method:'POST',body:JSON.stringify({content,socials:await getSocialObject()})});msg('contentStatus','All website content saved to the live server.','ok');updateDashboard();}catch(e){msg('contentStatus',e.message,'warn');}};
+
+// Save a single content area without publishing unsaved edits from other areas.
+document.querySelectorAll('[data-save-content]').forEach(button=>{
+  button.addEventListener('click',async()=>{
+    const keys=button.dataset.saveContent.split(',').map(k=>k.trim()).filter(Boolean);
+    const status=document.querySelector(`[data-save-status="${button.dataset.saveContent}"]`);
+    const original=button.textContent;button.disabled=true;button.textContent='Saving…';
+    try{
+      const draft=collectContent();
+      const current=await api('/api/content');
+      const merged=deepMerge(defaultContent,current.content||{});
+      keys.forEach(key=>{if(Object.prototype.hasOwnProperty.call(draft,key))merged[key]=draft[key];});
+      await api('/api/content',{method:'POST',body:JSON.stringify({content:merged})});
+      keys.forEach(key=>{content[key]=merged[key];});
+      if(status){status.textContent='Saved successfully';status.className='status show ok';}
+      button.textContent='Saved ✓';setTimeout(()=>{button.textContent=original;},1800);
+      updateDashboard();
+    }catch(error){if(status){status.textContent=error.message||'Could not save this section';status.className='status show warn';}else msg('contentStatus',error.message,'warn');button.textContent=original;}
+    finally{button.disabled=false;}
+  });
+});
 $('reloadContent').onclick=()=>loadContent().catch(e=>msg('contentStatus',e.message,'warn'));
 
 document.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>$(b.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'start'}));
@@ -107,11 +128,9 @@ $('importBackup').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{
   await Promise.all([loadContent(),loadProjects(),loadLaminates(),loadSocials(),loadLeads()]);msg('contentStatus','Backup imported. Uploaded media files remain where their URLs point.','ok');
 }catch(err){msg('contentStatus',err.message,'warn');}e.target.value='';};
 
-// Website media and lead email settings
-let demoVideoUrl='';
-$('demoVideoFile')?.addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{demoVideoUrl=await uploadMedia(f);$('demoVideoStatus').textContent='Video uploaded. Click Save Media Settings.';}catch(err){msg('contentStatus',err.message,'warn');}});
-async function loadSiteMedia(){try{const d=await api('/api/site-settings');demoVideoUrl=d.siteSettings?.demoVideoUrl||'';$('loaderDuration').value=String(d.siteSettings?.loaderDuration||4500);if(demoVideoUrl)$('demoVideoPreview').innerHTML=`<video src="${escapeHtml(demoVideoUrl)}" controls muted playsinline style="max-width:420px;width:100%;border-radius:12px;margin-top:12px"></video>`;}catch(e){}}
-$('saveSiteMedia')?.addEventListener('click',async()=>{try{const d=await api('/api/site-settings',{method:'POST',body:JSON.stringify({demoVideoUrl,loaderDuration:Number($('loaderDuration').value)})});msg('contentStatus',`Media settings saved. Loader: ${d.siteSettings.loaderDuration/1000}s.`,'ok');}catch(e){msg('contentStatus',e.message,'warn');}});
+// Website media settings: control the opening logo animation only.
+async function loadSiteMedia(){try{const d=await api('/api/site-settings');$('loaderDuration').value=String(d.siteSettings?.loaderDuration||4500);}catch(e){}}
+$('saveSiteMedia')?.addEventListener('click',async()=>{try{const d=await api('/api/site-settings',{method:'POST',body:JSON.stringify({loaderDuration:Number($('loaderDuration').value)})});msg('contentStatus',`Logo animation setting saved: ${d.siteSettings.loaderDuration/1000}s.`,'ok');}catch(e){msg('contentStatus',e.message,'warn');}});
 async function loadEmailSettings(){try{const d=await api('/api/email-settings');const e=d.emailSettings||{};$('mailTo').value=e.to||'mscinterior1@gmail.com';$('mailFrom').value=e.from||'';$('emailStatus').textContent=e.configured?'Resend email notifications are configured.':'Add RESEND_API_KEY in Render Environment to enable email notifications.';}catch(e){}}
 $('saveEmailSettings')?.addEventListener('click',async()=>{try{await api('/api/email-settings',{method:'POST',body:'{}'});$('emailStatus').textContent='Email configuration is managed in Render Environment.';msg('contentStatus','Use Render Environment for RESEND_API_KEY, RESEND_FROM and MAIL_TO.','ok');}catch(e){$('emailStatus').textContent=e.message;msg('contentStatus',e.message,'warn');}});
 $('testEmail')?.addEventListener('click',async()=>{try{const d=await api('/api/test-email',{method:'POST',body:'{}'});msg('contentStatus',`Test email sent to ${d.to}.`,'ok');}catch(e){msg('contentStatus',e.message,'warn');}});

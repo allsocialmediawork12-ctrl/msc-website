@@ -459,7 +459,7 @@ document.head.appendChild(revealStyle);
     setText('.brand-text strong',c.brandName); setText('.brand-text small',c.brandSubtitle);
     const navVals=[c.nav?.home,c.nav?.services,c.nav?.projects,c.nav?.about,c.nav?.process,c.nav?.contact];
     document.querySelectorAll('.desktop-nav a').forEach((a,i)=>{if(navVals[i]) a.textContent=navVals[i];});
-    setText('.header-quote',c.nav?.estimate+' ↗'); setText('.header-cta',c.nav?.consultation+' ↗');
+    setText('#headerWallArt', (c.nav?.wallEstimate||'Wall Estimation')+' ↗'); setText('#headerInteriorEstimate', (c.nav?.estimate||'Interior Estimation')+' ↗'); setText('.header-cta',c.nav?.consultation+' ↗');
 
     // Hero
     setText('.hero .eyebrow',c.hero?.eyebrow); setText('.hero .hero-copy',c.hero?.copy); setText('.hero .btn-gold',c.hero?.primary+' ↗'); setText('.hero .text-link',c.hero?.secondary+' ↓');
@@ -476,7 +476,7 @@ document.head.appendChild(revealStyle);
       serviceGrid.innerHTML=c.services.items.map((it,i)=>`<article class="service-card ${i===0?'featured':''}" tabindex="0" role="button" data-service-index="${i}" aria-label="Explore ${esc(it.title||'service')}">${it.image?`<div class="service-image"><img src="${esc(it.image)}" alt="${esc(it.title||'MSC service')}" loading="lazy"></div>`:``}<div class="service-number">${esc(it.number||String(i+1).padStart(2,'0'))}</div><h3>${esc(it.title||'Service')}</h3><p>${esc(it.description||'')}</p><a href="#service-details" data-service-index="${i}">Explore service <span>↗</span></a></article>`).join('');
       const detailModal=document.getElementById('serviceDetailModal');
       const closeDetail=()=>{detailModal?.classList.remove('open');detailModal?.setAttribute('aria-hidden','true');document.body.style.overflow='';};
-      const openDetail=(index)=>{const svc=c.services.items[index];if(!svc||!detailModal)return;document.getElementById('serviceDetailKicker').textContent=`SERVICE ${svc.number||String(index+1).padStart(2,'0')} · MSC`;document.getElementById('serviceDetailTitle').textContent=svc.title||'Our Service';document.getElementById('serviceDetailDescription').textContent=svc.description||'';const opts=Array.isArray(svc.details)?svc.details:[];document.getElementById('serviceDetailOptions').innerHTML=opts.length?opts.map(d=>`<article class="service-detail-option">${d.image?`<img src="${esc(d.image)}" alt="${esc(d.title||'Service option')}" loading="lazy">`:''}<h3>${esc(d.title||'Option')}</h3><p>${esc(d.description||'')}</p></article>`).join(''):'<div class="service-detail-empty">More details about this service are coming soon. Contact MSC to discuss your requirements.</div>';const cta=document.getElementById('serviceDetailCTA');cta.href=String(svc.title||'').toLowerCase().includes('digital wall art')?'#estimate':'#contact';cta.textContent=String(svc.title||'').toLowerCase().includes('digital wall art')?'Get a wall art estimate ↗':'Discuss this service ↗';detailModal.classList.add('open');detailModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';};
+      const openDetail=(index)=>{const svc=c.services.items[index];if(!svc||!detailModal)return;document.getElementById('serviceDetailKicker').textContent=`SERVICE ${svc.number||String(index+1).padStart(2,'0')} · MSC`;document.getElementById('serviceDetailTitle').textContent=svc.title||'Our Service';document.getElementById('serviceDetailDescription').textContent=svc.description||'';const opts=Array.isArray(svc.details)?svc.details:[];document.getElementById('serviceDetailOptions').innerHTML=opts.length?opts.map(d=>`<article class="service-detail-option">${d.image?`<img src="${esc(d.image)}" alt="${esc(d.title||'Service option')}" loading="lazy">`:''}<h3>${esc(d.title||'Option')}</h3><p>${esc(d.description||'')}</p></article>`).join(''):'';const cta=document.getElementById('serviceDetailCTA');cta.href=String(svc.title||'').toLowerCase().includes('digital wall art')?'#estimate':'#contact';cta.textContent=String(svc.title||'').toLowerCase().includes('digital wall art')?'Get a wall art estimate ↗':'Discuss this service ↗';detailModal.classList.add('open');detailModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';};
       serviceGrid.querySelectorAll('article[data-service-index]').forEach(el=>{el.addEventListener('click',e=>{if(e.target.closest('a'))e.preventDefault();openDetail(Number(el.dataset.serviceIndex));});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(Number(el.dataset.serviceIndex));}});});
       document.getElementById('serviceDetailClose')?.addEventListener('click',closeDetail);detailModal?.addEventListener('click',e=>{if(e.target===detailModal)closeDetail();});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDetail();});
     }
@@ -523,7 +523,6 @@ document.head.appendChild(revealStyle);
     if(floating){floating.hidden=visibleFloating===0;floating.style.display=visibleFloating?'flex':'none';}
     const socialLinks=document.getElementById('socialLinks');if(socialLinks)socialLinks.dataset.style=socials.iconStyle||'circle';
     // Demo video and loader
-    const siteSettings=contentData.siteSettings||{}; const videoShell=document.getElementById('demoVideoShell'); if(videoShell&&siteSettings.demoVideoUrl)videoShell.innerHTML=`<video class="demo-video" src="${esc(siteSettings.demoVideoUrl)}" controls muted playsinline preload="metadata"></video>`;
     // Laminates
     setText('#laminateLabel',c.laminate?.label); const lh=document.querySelector('#laminateHeading'); if(lh&&c.laminate?.heading){const words=String(c.laminate.heading).split(/\s+/);const last=esc(words.pop()||'');lh.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>';}
     setText('#laminateIntro',c.laminate?.intro);
@@ -537,5 +536,4 @@ document.head.appendChild(revealStyle);
     document.querySelectorAll('.service-card,.project-card,.process-step,.feature-list > div,.estimate-highlights div,.laminate-public-card').forEach(el=>{el.style.opacity='1';el.style.transform='none';});
   }catch(e){ console.warn('MSC live CMS could not load; using the baked-in website content.',e); }
 })();
-
 
