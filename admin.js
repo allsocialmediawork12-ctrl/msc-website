@@ -126,6 +126,24 @@ function renderLaminates(){const box=$('laminateList');box.innerHTML='';laminate
 let newLaminateImage='';
 $('newLaminateImage').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{newLaminateImage=await uploadImage(f);$('newLaminatePreview').src=newLaminateImage;$('newLaminatePreview').classList.add('show');}catch(err){msg('contentStatus',err.message,'warn');}};
 $('addLaminate').onclick=async()=>{const name=$('newLaminateName').value.trim();const material=$('newLaminateMaterial').value.trim();const thickness=$('newLaminateThickness').value.trim();const finish=$('newLaminateFinish').value.trim();const specification=$('newLaminateSpecification').value.trim();if(!name||!newLaminateImage)return msg('contentStatus','Add a laminate finish name and image.','warn');try{const d=await api('/api/laminates',{method:'POST',body:JSON.stringify({name,image:newLaminateImage,material,thickness,finish,specification})});laminates.unshift(d.laminate);renderLaminates();updateDashboard();$('newLaminateName').value='';$('newLaminateMaterial').value='';$('newLaminateThickness').value='';$('newLaminateFinish').value='';$('newLaminateSpecification').value='';$('newLaminateImage').value='';newLaminateImage='';$('newLaminatePreview').removeAttribute('src');$('newLaminatePreview').classList.remove('show');msg('contentStatus','Laminate finish added to the website.','ok');}catch(e){msg('contentStatus',e.message,'warn');}};
+$('bulkAddLaminates').onclick=async()=>{
+ const input=$('bulkLaminateImages'),files=[...(input.files||[])];
+ if(!files.length)return msg('bulkLaminateStatus','Please select one or more laminate photos.','warn');
+ const button=$('bulkAddLaminates');button.disabled=true;button.textContent='Uploading photos…';let added=0;const errors=[];
+ try{
+  for(const file of files){
+   try{
+    const image=await uploadImage(file);
+    const name=file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim()||'Laminate Finish';
+    const d=await api('/api/laminates',{method:'POST',body:JSON.stringify({name,image,material:'',thickness:'',finish:'',specification:''})});
+    laminates.unshift(d.laminate);added++;
+   }catch(err){errors.push(`${file.name}: ${err.message}`);}
+  }
+  renderLaminates();updateDashboard();input.value='';
+  if(errors.length)msg('bulkLaminateStatus',`${added} photo(s) added. ${errors.length} failed: ${errors.join(' · ')}`,'warn');
+  else msg('bulkLaminateStatus',`${added} laminate photo(s) uploaded and published successfully. You can edit each name and details below.`,'ok');
+ }finally{button.disabled=false;button.textContent='Upload All Laminate Photos';}
+};
 
 async function loadLeads(){const d=await api('/api/leads');leads=d.leads||[];renderLeads();updateDashboard();}
 function leadValue(v){return escapeHtml(v||'—');}
