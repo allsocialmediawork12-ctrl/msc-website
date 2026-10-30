@@ -36,7 +36,7 @@ filters.forEach(filter => filter.addEventListener('click', () => {
   filters.forEach(btn => btn.classList.remove('active'));
   filter.classList.add('active');
   const selected = filter.dataset.filter;
-  cards.forEach(card => card.style.display = selected === 'all' || card.dataset.category === selected ? '' : 'none');
+  cards.forEach(card => { const cat=(card.dataset.category||'').toLowerCase(); const match=selected==='all'||(selected==='interior'&&['residential','commercial','hospitality','interior'].includes(cat))||(selected==='wallart'&&['wallart','wall-art','wall_art'].includes(cat))||cat===selected; card.style.display=match?'':'none'; });
 }));
 
 // Consultation form. The form posts to the private /api/lead endpoint when the site is deployed with the MSC backend.
@@ -526,15 +526,18 @@ function closeProjectGallery(){const modal=document.getElementById('projectDetai
     setText('#contact .section-label',c.contact?.label); const ch=document.querySelector('#contact h2'); if(ch&&c.contact?.heading){const words=String(c.contact.heading).split(/\s+/);const last=esc(words.pop()||'');ch.innerHTML=esc(words.join(' '))+' <em>'+last+'</em>'; } setText('#contact .consultation-inner > div > p',c.contact?.copy);
     setText('.footer-brand p',c.footer?.tagline); setText('.footer-bottom span:last-child',c.footer?.closing);
 
-    // Projects: click a project card to open its full photo gallery and project details.
-    const grid=document.querySelector('.project-grid'); const projects=projectData.projects||[];
-    if(grid){grid.innerHTML=projects.map((p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" style="object-fit:${p.imageFit==='contain'?'contain':'cover'};object-position:${Math.max(0,Math.min(100,Number(p.imagePositionX??50)))}% ${Math.max(0,Math.min(100,Number(p.imagePositionY??50)))}%;--image-zoom:${Math.max(1,Math.min(1.6,Number(p.imageZoom??100)/100))}">`;return `<article class="project-card ${i===0?'tall':''}" data-project-index="${i}" data-category="${esc(p.category||'residential')}" tabindex="0" role="button" aria-label="View photos for ${esc(p.title)}"><span class="project-view-hint">VIEW PROJECT ↗</span>${media}<div class="project-info"><span>${esc(p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Residential')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;}).join('');}
-    const currentFilters=[...document.querySelectorAll('.filter')]; const freshCards=[...document.querySelectorAll('.project-card')]; currentFilters.forEach(filter=>filter.onclick=()=>{currentFilters.forEach(b=>b.classList.remove('active'));filter.classList.add('active');freshCards.forEach(card=>card.style.display=filter.dataset.filter==='all'||card.dataset.category===filter.dataset.filter?'':'none');});
-    freshCards.forEach((card,i)=>{
-      const open=()=>{if(projects[i])openProjectGallery(projects[i]);};
+    // Projects are managed and displayed in two independent sections.
+    const interiorGrid=document.querySelector('#interiorProjectsGrid');
+    const wallArtGrid=document.querySelector('#wallArtProjectsGrid');
+    const projects=projectData.projects||[];
+    const renderProjectCard=(p,i)=>{const media=p.videoUrl?`<div class="project-video-wrap"><video src="${esc(p.videoUrl)}" controls muted playsinline preload="metadata"></video><span class="video-badge">MSC FILM</span></div>`:`<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" style="object-fit:${p.imageFit==='contain'?'contain':'cover'};object-position:${Math.max(0,Math.min(100,Number(p.imagePositionX??50)))}% ${Math.max(0,Math.min(100,Number(p.imagePositionY??50)))}%;--image-zoom:${Math.max(1,Math.min(1.6,Number(p.imageZoom??100)/100))}">`;return `<article class="project-card ${i===0?'tall':''}" data-project-index="${i}" data-category="${esc(p.category||'residential')}" tabindex="0" role="button" aria-label="View photos for ${esc(p.title)}"><span class="project-view-hint">VIEW PROJECT ↗</span>${media}<div class="project-info"><span>${esc(p.category==='wallart'?'Wall Art':p.category==='commercial'?'Commercial':p.category==='hospitality'?'Hospitality':'Interior')}</span><h3>${esc(p.title)}</h3><p>${esc(p.location)}</p>${p.description?`<small>${esc(p.description)}</small>`:''}</div></article>`;};
+    if(interiorGrid)interiorGrid.innerHTML=projects.map((p,i)=>({p,i})).filter(x=>x.p.category!=='wallart').map(x=>renderProjectCard(x.p,x.i)).join('')||'<p class="projects-empty">Interior projects will be showcased here soon.</p>';
+    if(wallArtGrid)wallArtGrid.innerHTML=projects.map((p,i)=>({p,i})).filter(x=>x.p.category==='wallart').map(x=>renderProjectCard(x.p,x.i)).join('')||'<p class="projects-empty">Wall art projects will be showcased here soon.</p>';
+    [interiorGrid,wallArtGrid].filter(Boolean).forEach(grid=>grid.querySelectorAll('.project-card').forEach(card=>{
+      const open=()=>{const index=Number(card.dataset.projectIndex);if(projects[index])openProjectGallery(projects[index]);};
       card.addEventListener('click',event=>{if(event.target.closest('video,button,a'))return;open();});
       card.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}});
-    });
+    }));
 
     // Show only social networks whose URLs are saved in the admin panel.
     const socials=contentData.socials||{};
