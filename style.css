@@ -578,3 +578,233 @@ body.project-detail-open{overflow:hidden}
 /* Independent portfolio sections: retain the existing MSC visual language. */
 .project-subsection{max-width:var(--max);margin:0 auto 54px}.project-subsection:last-of-type{margin-bottom:0}.project-subsection-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid rgba(130,111,82,.28)}.project-subsection-head>span{font-size:10px;letter-spacing:.16em;color:var(--gold)}.project-subsection-head h3{font-family:'Playfair Display',serif;font-size:30px;font-weight:500;margin:0;color:var(--ink)}.project-subsection-head p,.project-section-note{font-size:11px;letter-spacing:.04em;color:var(--muted)}.project-subsection-head p{margin:0 0 0 auto}.project-section-note{max-width:var(--max);margin:-24px auto 36px;text-align:right}.projects-empty{grid-column:1/-1;padding:26px;border:1px dashed rgba(130,111,82,.35);color:var(--muted);font-size:13px}.portfolio-group-admin{margin-top:20px;padding:16px;border:1px solid var(--line);border-radius:13px;background:#fffdfa}.portfolio-group-head{margin-bottom:12px}.portfolio-group-head h3{margin:0 0 5px;font-size:17px}.portfolio-group-head p{margin:0;color:var(--muted);font-size:12px}.portfolio-group-admin #interiorProjectList,.portfolio-group-admin #wallArtProjectList{display:grid;gap:12px}
 @media(max-width:700px){.project-subsection-head h3{font-size:25px}.project-subsection-head p{width:100%;margin-left:29px}.project-section-note{text-align:left;margin-top:-20px}}
+
+/* MSC admin login — refined warm ivory and champagne palette */
+.login-screen{
+  min-height:100vh;display:grid;place-items:center;padding:36px 20px;
+  background:radial-gradient(ellipse at 18% 12%,rgba(190,157,106,.16),transparent 34%),
+             radial-gradient(ellipse at 85% 88%,rgba(117,91,62,.10),transparent 36%),#eee8de;
+}
+.login-box{
+  width:min(490px,100%);padding:48px 46px 42px;background:#fffdf9;color:#29241f;
+  border:1px solid #e3d8c9;border-radius:8px;box-shadow:0 24px 70px rgba(61,47,33,.13);
+}
+.login-brand{display:flex;align-items:center;gap:16px;margin-bottom:38px}
+.login-brand img{width:58px;height:58px;object-fit:contain}
+.login-brand h1{font-family:'Playfair Display',Georgia,serif;font-size:29px;line-height:1.1;font-weight:600;color:#29241f;letter-spacing:-.025em}
+.login-brand p{margin:7px 0 0;color:#827665;font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+.login-kicker{display:inline-block;color:#987343;font-size:9px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;margin-bottom:7px}
+.login-box h2{font-family:'Playfair Display',Georgia,serif;font-size:38px;line-height:1.12;font-weight:500;letter-spacing:-.025em;color:#29241f;margin:5px 0 10px}
+.login-box .helper{color:#766d62;font-size:13px;line-height:1.75;max-width:365px}
+.login-box .field{margin-top:22px!important}
+.login-box .field label{display:block;margin-bottom:8px;color:#766957;font-size:9px;font-weight:800;letter-spacing:.17em;text-transform:uppercase}
+.login-box input{width:100%;height:52px;padding:0 15px;background:#fffefa;border:1px solid #ded2c2;border-radius:4px;color:#302921;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.login-box input::placeholder{color:#a69b8e}
+.login-box input:focus{border-color:#b28d5b;box-shadow:0 0 0 3px rgba(178,141,91,.12)}
+.login-box .password-wrap{position:relative}
+.login-box .password-wrap input{padding-right:66px}
+.login-box .show-pass{position:absolute;right:7px;top:7px;height:38px;padding:0 12px;border:1px solid #e4d9ca;border-radius:3px;background:#f3eee6;color:#5b4b38;font-size:10px;font-weight:700;cursor:pointer}
+.login-box .btns{display:flex;gap:10px;margin-top:23px;align-items:stretch}
+.login-box .btn{min-height:49px;padding:13px 18px;border-radius:3px;font-size:9px;font-weight:800;letter-spacing:.13em}
+.login-box .btn.primary{flex:1;background:#29241f!important;border:1px solid #29241f!important;color:#fffdf9!important}
+.login-box .btn.primary:hover{background:#4a3b2c!important;border-color:#4a3b2c!important;transform:translateY(-1px)}
+.login-box .btn.light{background:transparent!important;border:1px solid #d8c9b5!important;color:#5b4b38!important}
+.login-box .btn.light:hover{background:#f3eee6!important}
+.login-box .status{margin-top:14px;color:#8a4e3d}
+@media(max-width:520px){.login-box{padding:36px 25px 30px}.login-brand{margin-bottom:30px}.login-brand h1{font-size:25px}.login-box h2{font-size:33px}.login-box .btns{flex-direction:column}.login-box .btns .btn{width:100%}}
+
+/* Final login layout matched to the supplied MSC reference */
+.login-screen{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:32px 20px;
+  background:
+    radial-gradient(ellipse at 18% 12%,rgba(196,166,123,.18),transparent 36%),
+    radial-gradient(ellipse at 88% 86%,rgba(129,105,76,.10),transparent 38%),
+    #eee8de;
+}
+.login-box{
+  width:min(470px,100%);
+  padding:42px 42px 42px;
+  background:#fffdfa;
+  color:#211d19;
+  border:1px solid #e8dfd3;
+  border-radius:26px;
+  box-shadow:0 28px 72px rgba(54,43,31,.22);
+}
+.login-brand{display:flex;align-items:center;gap:16px;margin-bottom:30px}
+.login-brand img{width:58px;height:58px;object-fit:contain}
+.login-brand h1{font-family:'Playfair Display',Georgia,serif;font-size:29px;line-height:1.1;font-weight:700;color:#171513;letter-spacing:-.025em}
+.login-brand p{margin:7px 0 0;color:#746b60;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+.login-kicker{display:inline-block;color:#a97836;font-size:9px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;margin-bottom:7px}
+.login-box h2{font-family:'Playfair Display',Georgia,serif;font-size:36px;line-height:1.12;font-weight:500;letter-spacing:-.025em;color:#171513;margin:5px 0 9px}
+.login-box .helper{color:#6e6256;font-size:13px;line-height:1.65;max-width:385px}
+.login-box .field{margin-top:22px!important}
+.login-box .field label{display:block;margin-bottom:8px;color:#66594b;font-size:9px;font-weight:800;letter-spacing:.17em;text-transform:uppercase}
+.login-box input{width:100%;height:51px;padding:0 13px;background:#fffefa;border:1px solid #dfd2c1;border-radius:11px;color:#302921;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.login-box input::placeholder{color:#92877b}
+.login-box input:focus{border-color:#b99560;box-shadow:0 0 0 3px rgba(185,149,96,.13)}
+.login-box .password-wrap{position:relative}
+.login-box .password-wrap input{padding-right:66px}
+.login-box .show-pass{position:absolute;right:7px;top:7px;height:37px;padding:0 11px;border:0;border-radius:9px;background:#f2ece3;color:#5b4934;font-size:10px;font-weight:800;cursor:pointer}
+.login-box .btns{display:flex;gap:9px;margin-top:16px;align-items:stretch}
+.login-box .btn{min-height:49px;padding:13px 15px;border-radius:11px;font-size:9px;font-weight:800;letter-spacing:.13em}
+.login-box .btn.primary{flex:1;background:linear-gradient(110deg,#bd9659,#d8ba83)!important;border:1px solid #c9a66d!important;color:#17130e!important}
+.login-box .btn.primary:hover{background:linear-gradient(110deg,#ad8448,#c9a66d)!important;border-color:#bd9659!important;transform:translateY(-1px)}
+.login-box .btn.light{background:#f4eee6!important;border:1px solid #dfd1bf!important;color:#5c4b38!important}
+.login-box .btn.light:hover{background:#eee5d9!important}
+.login-box .status{margin-top:14px;color:#8a4e3d}
+@media(max-width:520px){
+  .login-screen{padding:22px 16px}
+  .login-box{padding:34px 25px 30px;border-radius:22px}
+  .login-brand{margin-bottom:28px}
+  .login-brand h1{font-size:25px}
+  .login-box h2{font-size:33px}
+  .login-box .btns{flex-direction:column}
+  .login-box .btns .btn{width:100%}
+}
+
+/* MSC ADMIN — unified warm ivory / champagne studio theme */
+body.admin-page{
+  --bg:#f1ece4;--paper:#fffdfa;--ink:#211d19;--muted:#756b60;--line:#e2d6c6;
+  --gold:#bd9659;--gold2:#d8ba83;--dark:#211d19;--dark2:#3a3027;--danger:#8f4940;--green:#63816a;
+  background:radial-gradient(ellipse at 12% 0%,rgba(196,166,123,.16),transparent 32%),#f1ece4!important;
+  color:#29231d!important;font-family:Arial,Helvetica,sans-serif!important;
+}
+body.admin-page .admin-wrap{max-width:none;margin:0;padding:22px 30px 72px 258px;color:#29231d}
+body.admin-page .admin-top{position:sticky;top:0;z-index:30;margin:-22px -30px 22px -258px;padding:14px 30px 14px 258px;background:rgba(255,253,250,.96)!important;backdrop-filter:blur(16px);border-bottom:1px solid #e4d8c8!important;box-shadow:0 5px 20px rgba(55,42,28,.035)}
+body.admin-page .admin-brand img{width:42px;height:42px;border-radius:10px;background:#f5efe6;object-fit:contain;padding:4px}
+body.admin-page .admin-brand h1{font:700 19px Georgia,serif!important;color:#211d19!important;letter-spacing:-.025em}
+body.admin-page .admin-brand p{font-size:11px;color:#81766a!important}
+body.admin-page .dot{background:#719477}
+body.admin-page .section-nav{position:fixed;z-index:40;left:0;top:0;bottom:0;width:232px;margin:0;padding:24px 14px;background:#f5efe6!important;border-right:1px solid #e2d6c6!important;display:flex;flex-direction:column;gap:8px;overflow-y:auto;border-radius:0;box-shadow:5px 0 24px rgba(55,42,28,.035)}
+body.admin-page .section-nav:before{content:"MSC  /  STUDIO";display:block;padding:7px 11px 18px;color:#a77d43!important;font-size:11px;font-weight:800;letter-spacing:.18em}
+body.admin-page .section-nav button{width:100%;border:1px solid #e5d9c9!important;background:#fffdfa!important;color:#66594b!important;border-radius:12px;padding:13px 12px;text-align:left;transition:.18s;box-shadow:0 2px 7px rgba(55,42,28,.025)}
+body.admin-page .section-nav button:before{content:"◆";display:inline-block;width:24px;color:#bd9659!important;font-size:9px}
+body.admin-page .section-nav button strong{display:inline;font-size:12px;color:inherit!important;font-weight:700}
+body.admin-page .section-nav button span{display:block;padding:5px 0 0 24px;color:#887d70!important;font-size:10px}
+body.admin-page .section-nav button:hover,body.admin-page .section-nav button.active{background:#eee5d8!important;border-color:#c9aa7a!important;color:#2a241e!important}
+body.admin-page .dashboard{grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+body.admin-page .welcome,body.admin-page .stat,body.admin-page .admin-card{background:#fffdfa!important;border:1px solid #e3d8ca!important;border-radius:17px;box-shadow:0 10px 30px rgba(55,42,28,.045)!important;color:#29231d!important}
+body.admin-page .welcome{grid-column:1/-1;padding:22px 24px;background:linear-gradient(110deg,#fffdfa,#f6efe4)!important}
+body.admin-page .welcome small{color:#a77d43!important}
+body.admin-page .welcome h2{font:500 26px Georgia,serif!important;color:#211d19!important;letter-spacing:-.02em}
+body.admin-page .welcome p{color:#756b60!important}
+body.admin-page .stat{padding:18px;min-height:112px}
+body.admin-page .stat span{color:#85796c!important;font-size:9px;letter-spacing:.13em}
+body.admin-page .stat strong{font:700 29px Georgia,serif!important;color:#211d19!important}
+body.admin-page .stat small{color:#82776b!important}
+body.admin-page .admin-card{padding:25px;margin:14px 0;scroll-margin-top:90px}
+body.admin-page .admin-card>h2{font:600 27px Georgia,serif!important;color:#211d19!important;letter-spacing:-.02em}
+body.admin-page .admin-card>p{color:#756b60!important}
+body.admin-page .admin-card h3,body.admin-page .admin-card h4,body.admin-page .service-row h3,body.admin-page .step-row h3,body.admin-page .feature-row h3,body.admin-page .portfolio-row h3{color:#302820!important}
+body.admin-page .field label{color:#766957!important}
+body.admin-page .field input,body.admin-page .field textarea,body.admin-page .field select,body.admin-page .portfolio-row input,body.admin-page .portfolio-row select,body.admin-page .laminate-card input,body.admin-page .laminate-card textarea{background:#fffefa!important;color:#302921!important;border:1px solid #dfd2c1!important;border-radius:10px}
+body.admin-page .field input::placeholder,body.admin-page .field textarea::placeholder{color:#a69b8e!important}
+body.admin-page .field input:focus,body.admin-page .field textarea:focus,body.admin-page .field select:focus,body.admin-page .portfolio-row input:focus,body.admin-page .portfolio-row select:focus{border-color:#b99560!important;box-shadow:0 0 0 3px rgba(185,149,96,.13)!important}
+body.admin-page .btn{border-radius:10px;transition:transform .15s,box-shadow .15s}
+body.admin-page .btn.primary{background:linear-gradient(110deg,#bd9659,#d8ba83)!important;border:1px solid #c9a66d!important;color:#211a12!important}
+body.admin-page .btn.light{background:#f4eee6!important;border:1px solid #dfd1bf!important;color:#5c4b38!important}
+body.admin-page .btn.dark{background:#29241f!important;border:1px solid #29241f!important;color:#fffdfa!important}
+body.admin-page .btn.danger{background:#f7eae6!important;border:1px solid #e6c9c1!important;color:#8a443b!important}
+body.admin-page .btn:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(40,30,20,.08)}
+body.admin-page .inner-card,body.admin-page .service-detail-admin,body.admin-page .service-detail-edit{background:#f8f3eb!important;border:1px solid #e4d8c8!important;color:#302820!important;border-radius:13px}
+body.admin-page .service-row,body.admin-page .step-row,body.admin-page .feature-row,body.admin-page .portfolio-row,body.admin-page .lead-card,body.admin-page .laminate-card{background:#fffdfa!important;border:1px solid #e4d8c8!important;color:#302820!important;border-radius:13px;box-shadow:0 5px 18px rgba(55,42,28,.035)!important}
+body.admin-page .service-row *,body.admin-page .step-row *,body.admin-page .feature-row *,body.admin-page .portfolio-row *,body.admin-page .laminate-card *{color:inherit}
+body.admin-page .service-row h3,body.admin-page .step-row h3,body.admin-page .feature-row h3,body.admin-page .portfolio-row h3{color:#302820!important}
+body.admin-page .upload-box,body.admin-page .note,body.admin-page .lead-toolbar,body.admin-page .lead-message,body.admin-page .empty-leads{background:#f8f3eb!important;color:#756b60!important;border-color:#e4d8c8!important}
+body.admin-page .account-highlight{background:linear-gradient(130deg,#f4ecdf,#fbf8f2)!important;border:1px solid #e2d2bb!important}
+body.admin-page .account-highlight h3{color:#302820!important}body.admin-page .account-highlight p{color:#756b60!important}
+body.admin-page .lead-head{background:#f2eadd!important;border-color:#e1d3c0!important}
+body.admin-page .lead-head h3{color:#302820!important}body.admin-page .lead-head p{color:#756b60!important}
+body.admin-page .lead-badge{background:#eee1ce!important;color:#7a5b32!important}
+body.admin-page .lead-field{background:#fffdfa!important;border-color:#e4d8c8!important}body.admin-page .lead-field span{color:#82776b!important}body.admin-page .lead-field strong{color:#302820!important}
+body.admin-page .lead-body{color:#51483e!important}
+body.admin-page .status.ok{background:#edf4ed!important;color:#45664b!important}body.admin-page .status.warn{background:#fff0e8!important;color:#895936!important}
+body.admin-page .section-savebar{background:#f3ecdf!important;border-color:#e2d2b8!important}body.admin-page .section-savebar>span{color:#786650!important}
+body.admin-page .preview{border:1px solid #e4d8c8!important}
+@media(max-width:1000px){body.admin-page .admin-wrap{padding-left:238px}body.admin-page .admin-top{margin-left:-238px;padding-left:238px}body.admin-page .section-nav{width:214px}body.admin-page .dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){body.admin-page .admin-wrap{padding:14px 12px 48px}body.admin-page .admin-top{position:static;margin:0 0 14px;padding:8px 0;background:transparent!important;border:0;backdrop-filter:none;box-shadow:none}body.admin-page .section-nav{position:static;width:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;margin:0 0 14px;border:1px solid #e2d6c6!important;border-radius:13px}body.admin-page .section-nav:before{grid-column:1/-1;padding:4px 8px 8px}body.admin-page .section-nav button{padding:10px 8px}body.admin-page .section-nav button span{display:none}body.admin-page .dashboard{grid-template-columns:repeat(2,minmax(0,1fr))}body.admin-page .welcome{grid-column:1/-1;padding:18px}body.admin-page .admin-card{padding:17px}}
+
+/* FINAL CONTRAST PASS — match the supplied warm ivory reference */
+body.admin-page,
+body.admin-page .admin-wrap,
+body.admin-page .admin-card,
+body.admin-page .service-row,
+body.admin-page .step-row,
+body.admin-page .feature-row,
+body.admin-page .portfolio-row,
+body.admin-page .laminate-card,
+body.admin-page .lead-card,
+body.admin-page .inner-card,
+body.admin-page .service-detail-admin,
+body.admin-page .service-detail-edit {
+  color: #211d19 !important;
+}
+body.admin-page h1,
+body.admin-page h2,
+body.admin-page h3,
+body.admin-page h4,
+body.admin-page h5,
+body.admin-page strong,
+body.admin-page b,
+body.admin-page legend {
+  color: #211d19 !important;
+}
+body.admin-page p,
+body.admin-page li,
+body.admin-page .admin-card > p,
+body.admin-page .welcome p,
+body.admin-page .service-row p,
+body.admin-page .step-row p,
+body.admin-page .feature-row p,
+body.admin-page .portfolio-row p {
+  color: #62584d !important;
+}
+body.admin-page label,
+body.admin-page .field label,
+body.admin-page .section-nav button,
+body.admin-page .section-nav button strong {
+  color: #514638 !important;
+}
+body.admin-page small,
+body.admin-page .muted,
+body.admin-page .hint,
+body.admin-page .section-nav button span,
+body.admin-page .stat small,
+body.admin-page .stat span {
+  color: #786e62 !important;
+}
+body.admin-page input,
+body.admin-page textarea,
+body.admin-page select,
+body.admin-page option {
+  color: #29231d !important;
+  background-color: #fffefa !important;
+}
+body.admin-page input::placeholder,
+body.admin-page textarea::placeholder {
+  color: #92877b !important;
+  opacity: 1;
+}
+body.admin-page .section-savebar > span,
+body.admin-page .upload-box,
+body.admin-page .note,
+body.admin-page .lead-toolbar,
+body.admin-page .lead-message,
+body.admin-page .empty-leads {
+  color: #62584d !important;
+}
+body.admin-page .btn.primary,
+body.admin-page .btn.primary * {
+  color: #211a12 !important;
+}
+body.admin-page .btn.dark,
+body.admin-page .btn.dark * {
+  color: #fffdfa !important;
+}
+body.admin-page .btn.danger,
+body.admin-page .btn.danger * {
+  color: #8a443b !important;
+}
